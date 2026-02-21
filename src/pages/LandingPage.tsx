@@ -14,6 +14,51 @@ import {
 
 type OS = "windows" | "macos" | "linux";
 
+// Windows logo – four coloured panes (Microsoft brand colours), square 24×24 grid
+const WindowsIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" aria-hidden="true">
+    <path fill="#f25022" d="M0 3.2 11.2 1.6v10H0z" />
+    <path fill="#7fba00" d="M12.8 1.4 24 0v11.6H12.8z" />
+    <path fill="#00a4ef" d="M0 13.2h11.2V23L0 21.4z" />
+    <path fill="#ffb900" d="M12.8 13.2H24V24l-11.2-1.4z" />
+  </svg>
+);
+
+// Apple logo – Simple Icons 24×24 path (square viewBox, renders cleanly at small sizes)
+const AppleIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden="true">
+    <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
+  </svg>
+);
+
+// Linux (Tux) – Simple Icons 24×24 path
+// Tux penguin – hand-crafted 24×24 multi-colour SVG, legible at 16 px
+const LinuxIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" aria-hidden="true">
+    {/* body */}
+    <ellipse cx="12" cy="15.5" rx="6" ry="6.8" fill="#1a1a1a" />
+    {/* belly */}
+    <ellipse cx="12" cy="16.5" rx="3.2" ry="4.8" fill="#e8e4d8" />
+    {/* neck connector */}
+    <rect x="9.5" y="8.5" width="5" height="2" rx="1" fill="#1a1a1a" />
+    {/* head */}
+    <circle cx="12" cy="6" r="3.6" fill="#1a1a1a" />
+    {/* face patch */}
+    <ellipse cx="12" cy="6.4" rx="2.1" ry="1.7" fill="#e8e4d8" />
+    {/* eyes */}
+    <circle cx="11" cy="5.6" r="0.55" fill="#fdd835" />
+    <circle cx="13" cy="5.6" r="0.55" fill="#fdd835" />
+    {/* pupils */}
+    <circle cx="11.15" cy="5.65" r="0.25" fill="#1a1a1a" />
+    <circle cx="13.15" cy="5.65" r="0.25" fill="#1a1a1a" />
+    {/* beak */}
+    <path d="M11.2 7.3 L12 8.6 L12.8 7.3z" fill="#fb8c00" />
+    {/* feet */}
+    <path d="M9 21.8 L7.2 23.4h4z" fill="#fb8c00" />
+    <path d="M15 21.8 L13 23.4H17z" fill="#fb8c00" />
+  </svg>
+);
+
 interface DocCard {
   icon: React.ReactNode;
   title: string;
@@ -163,10 +208,10 @@ const LandingPage = () => {
       ? "macos-theme"
       : "linux-theme";
 
-  const osOptions: { value: OS; label: string; icon: string }[] = [
-    { value: "windows", label: "Windows", icon: "🪟" },
-    { value: "macos", label: "macOS", icon: "🍎" },
-    { value: "linux", label: "Linux", icon: "🐧" },
+  const osOptions: { value: OS; label: string; icon: React.ReactNode }[] = [
+    { value: "windows", label: "Windows", icon: <WindowsIcon /> },
+    { value: "macos", label: "macOS", icon: <AppleIcon /> },
+    { value: "linux", label: "Linux", icon: <LinuxIcon /> },
   ];
 
   return (
@@ -258,19 +303,22 @@ const LandingPage = () => {
         {/* ── input section ────────────────────────────────────── */}
         <div className="w-full max-w-xl mx-auto flex-shrink-0 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
           {/* OS selector */}
-          <div className="flex justify-center mb-4">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold whitespace-nowrap">
+              Select OS
+            </span>
             <div className="inline-flex gap-0.5 rounded-xl bg-white/[0.03] border border-white/[0.06] p-1">
               {osOptions.map((os) => (
                 <button
                   key={os.value}
                   onClick={() => setSelectedOS(os.value)}
-                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
                     selectedOS === os.value
                       ? "bg-primary text-primary-foreground shadow-md"
                       : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
                   }`}
                 >
-                  <span className="mr-1">{os.icon}</span>
+                  {os.icon}
                   {os.label}
                 </button>
               ))}
