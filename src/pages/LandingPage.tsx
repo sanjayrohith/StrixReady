@@ -261,15 +261,18 @@ const LandingPage = () => {
 
       {/* ── nav ────────────────────────────────────────────────── */}
       <nav className="relative z-20 flex items-center justify-between px-6 py-4 md:px-10 flex-shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-lg overflow-hidden shadow-lg shadow-emerald-500/20">
+        <div className="flex items-center gap-3 group cursor-pointer">
+          <div className="relative h-9 w-9 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.15)] border border-emerald-500/20 group-hover:shadow-[0_0_25px_rgba(16,185,129,0.35)] group-hover:border-emerald-500/40 transition-all duration-500">
+            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <img
               src="/logo.png"
               alt="Strix logo"
-              className="h-full w-full object-contain"
+              className="h-full w-full object-contain p-1 transform group-hover:scale-110 transition-transform duration-500 relative z-10"
             />
           </div>
-          <span className="text-foreground text-base font-bold tracking-tight">StrixReady</span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 bg-[length:200%_auto] animate-gradient text-lg font-extrabold tracking-tight drop-shadow-[0_0_15px_rgba(52,211,153,0.2)] group-hover:drop-shadow-[0_0_20px_rgba(52,211,153,0.4)] transition-all duration-500">
+            StrixReady
+          </span>
         </div>
         <div className="flex items-center gap-3">
           <Dialog>
@@ -403,45 +406,53 @@ const LandingPage = () => {
           </div>
 
           {/* input + button */}
-          <div className="relative group">
-            <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-emerald-500/20 via-transparent to-cyan-500/20 opacity-0 group-focus-within:opacity-100 transition-opacity duration-500 blur-sm" />
-            <input
-              type="url"
-              value={repoUrl}
-              onChange={(e) => setRepoUrl(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-              placeholder="https://github.com/username/repository"
-              className="relative w-full rounded-2xl bg-[hsl(220,18%,7%)] border border-white/[0.08] px-5 py-3.5 text-foreground placeholder:text-muted-foreground/40 font-mono text-sm focus:outline-none focus:border-emerald-500/40 transition-all"
-            />
+          <div className="relative group mt-6">
+            {/* Animated glowing background that appears on focus/hover */}
+            <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 opacity-20 group-hover:opacity-40 group-focus-within:opacity-100 blur-md transition-all duration-500 animate-gradient bg-[length:200%_auto]" />
+            
+            <div className="relative flex items-center w-full rounded-[2rem] bg-[hsl(220,20%,6%)] border border-white/[0.08] p-1.5 shadow-2xl transition-all duration-300 group-focus-within:border-emerald-500/50 group-focus-within:bg-[hsl(220,20%,4%)]">
+              <div className="pl-4 pr-2 text-muted-foreground/50 group-focus-within:text-emerald-400 transition-colors">
+                <Github className="h-5 w-5" />
+              </div>
+              <input
+                type="url"
+                value={repoUrl}
+                onChange={(e) => setRepoUrl(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
+                placeholder="https://github.com/username/repository"
+                className="flex-1 bg-transparent border-none px-2 py-3.5 text-foreground placeholder:text-muted-foreground/40 font-mono text-sm focus:outline-none focus:ring-0"
+              />
+              <button
+                onClick={handleGenerate}
+                disabled={!repoUrl.trim() || loading}
+                className="relative overflow-hidden rounded-full px-6 py-3.5 font-semibold text-sm transition-all duration-300
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  bg-gradient-to-r from-emerald-500 to-teal-500 text-white
+                  hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]
+                  active:scale-[0.97] group/btn"
+              >
+                {/* Button hover shine effect */}
+                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover/btn:animate-shimmer" />
+                
+                <span className="relative flex items-center justify-center gap-2">
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Analyzing…
+                    </>
+                  ) : (
+                    <>
+                      Generate
+                      <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </span>
+              </button>
+            </div>
           </div>
-
-          <button
-            onClick={handleGenerate}
-            disabled={!repoUrl.trim() || loading}
-            className="mt-3 w-full rounded-2xl py-3.5 font-semibold text-sm transition-all duration-200
-              disabled:opacity-30 disabled:cursor-not-allowed
-              bg-gradient-to-r from-emerald-500 to-teal-500 text-white
-              hover:from-emerald-400 hover:to-teal-400
-              active:scale-[0.98]
-              animate-glow-pulse"
-          >
-            <span className="flex items-center justify-center gap-2">
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Analyzing…
-                </>
-              ) : (
-                <>
-                  Generate Dev Environment
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </span>
-          </button>
         </div>
       </main>
 
