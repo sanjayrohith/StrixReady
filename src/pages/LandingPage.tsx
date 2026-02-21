@@ -222,10 +222,7 @@ const LandingPage = () => {
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 gap-0 min-h-0">
         {/* headline */}
         <div className="text-center animate-fade-in-up flex-shrink-0">
-          <div className="inline-flex items-center gap-2 mb-4 rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1 text-[11px] font-medium text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Open Source &middot; AI Powered
-          </div>
+          
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[1.1] tracking-tight text-foreground mb-3">
             Dev Environments{" "}
