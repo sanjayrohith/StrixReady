@@ -202,8 +202,12 @@ const LandingPage = () => {
       {/* ── nav ────────────────────────────────────────────────── */}
       <nav className="relative z-20 flex items-center justify-between px-6 py-4 md:px-10 flex-shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-lg bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Sparkles className="text-white h-3.5 w-3.5" />
+          <div className="h-8 w-8 rounded-lg overflow-hidden shadow-lg shadow-emerald-500/20">
+            <img
+              src="/logo.png"
+              alt="Strix logo"
+              className="h-full w-full object-contain"
+            />
           </div>
           <span className="text-foreground text-base font-bold tracking-tight">StrixReady</span>
         </div>
