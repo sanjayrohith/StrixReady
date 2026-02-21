@@ -336,7 +336,7 @@ const LandingPage = () => {
             </DialogContent>
           </Dialog>
           <a
-            href="https://github.com"
+            href="https://github.com/sanjayrohith/StrixReady"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.06] transition-all"
