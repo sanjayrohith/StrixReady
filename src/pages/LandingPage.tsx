@@ -10,7 +10,22 @@ import {
   Cpu,
   Scan,
   Download,
+  HelpCircle,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 type OS = "windows" | "macos" | "linux";
 
@@ -256,15 +271,77 @@ const LandingPage = () => {
           </div>
           <span className="text-foreground text-base font-bold tracking-tight">StrixReady</span>
         </div>
-        <a
-          href="https://github.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.06] transition-all"
-        >
-          <Github className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">GitHub</span>
-        </a>
+        <div className="flex items-center gap-3">
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.06] transition-all">
+                <HelpCircle className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">FAQ & Docs</span>
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px] bg-[hsl(220,20%,6%)] border-white/[0.08] text-foreground">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold">Documentation & FAQ</DialogTitle>
+                <DialogDescription className="text-muted-foreground">
+                  Learn how StrixReady transforms repositories into dev environments.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-4 max-h-[60vh] overflow-y-auto pr-2">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="item-1" className="border-white/[0.08]">
+                    <AccordionTrigger className="hover:no-underline hover:text-emerald-400 transition-colors">
+                      How does the AI detection work?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-muted-foreground leading-relaxed">
+                      When you submit a URL, our backend clones the repository and scans it for package manifests (like <code className="text-emerald-400/80">package.json</code>, <code className="text-emerald-400/80">requirements.txt</code>, <code className="text-emerald-400/80">go.mod</code>), existing Dockerfiles, and CI/CD configurations. It uses this data to infer the exact languages, frameworks, and services (like Postgres or Redis) your project needs.
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="item-2" className="border-white/[0.08]">
+                    <AccordionTrigger className="hover:no-underline hover:text-emerald-400 transition-colors">
+                      What files are actually generated?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-muted-foreground leading-relaxed">
+                      We generate a <code className="text-emerald-400/80">.devcontainer/devcontainer.json</code> file configured with the optimal base image and VS Code extensions for your stack. If your project requires external services (like a database), we also generate a <code className="text-emerald-400/80">docker-compose.yml</code> and link it to the devcontainer.
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="item-3" className="border-white/[0.08]">
+                    <AccordionTrigger className="hover:no-underline hover:text-emerald-400 transition-colors">
+                      Why do I need to select my Operating System?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-muted-foreground leading-relaxed">
+                      While Docker containers are Linux-based, the host OS affects how volumes are mounted, how line endings (CRLF vs LF) are handled, and how networking (like <code className="text-emerald-400/80">host.docker.internal</code>) is configured. Selecting your OS ensures the generated config works flawlessly on your specific machine.
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="item-4" className="border-white/[0.08]">
+                    <AccordionTrigger className="hover:no-underline hover:text-emerald-400 transition-colors">
+                      Do I need Docker installed?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-muted-foreground leading-relaxed">
+                      Yes. To use the generated environments locally, you need Docker Desktop (or an alternative like OrbStack or Rancher Desktop) and VS Code with the "Dev Containers" extension installed.
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="item-5" className="border-white/[0.08]">
+                    <AccordionTrigger className="hover:no-underline hover:text-emerald-400 transition-colors">
+                      Does this work with private repositories?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-muted-foreground leading-relaxed">
+                      Currently, the public StrixReady instance only supports public GitHub repositories. Support for private repositories via GitHub OAuth integration is on our roadmap.
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <a
+            href="https://github.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.06] transition-all"
+          >
+            <Github className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">GitHub</span>
+          </a>
+        </div>
       </nav>
 
       {/* ── main content ───────────────────────────────────────── */}
