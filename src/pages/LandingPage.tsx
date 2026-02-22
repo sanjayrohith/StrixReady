@@ -17,6 +17,8 @@ import {
   Circle,
   ExternalLink,
   RotateCcw,
+  Play,
+  Zap,
 } from "lucide-react";
 import {
   Dialog,
@@ -357,7 +359,44 @@ const LandingPage = () => {
     setRepoUrl("");
   }, []);
 
-  const handleGenerate = () => {
+  const handleGenerateOnly = async () => {
+    if (!repoUrl.trim() || loading) return;
+    setStatus("running");
+    setLogs([{ step: "generate", message: "Sending repo for config generation…" }]);
+    setDoneData(null);
+
+    try {
+      const response = await fetch("http://localhost:8000/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: repoUrl.trim(), os: selectedOS }),
+      });
+
+      if (!response.ok) throw new Error("Failed to generate config");
+
+      const result = await response.json();
+      setLogs((prev) => [
+        ...prev,
+        { step: "done", message: "Config files generated successfully!", data: result },
+      ]);
+      setStatus("done");
+      setDoneData(result);
+      toast.success("Config generated!", {
+        description: "devcontainer.json and docker-compose.yml are ready.",
+      });
+    } catch {
+      setLogs((prev) => [
+        ...prev,
+        { step: "error", message: "Could not connect to backend. Is it running?" },
+      ]);
+      setStatus("error");
+      toast.error("Generation failed", {
+        description: "Could not connect to the backend.",
+      });
+    }
+  };
+
+  const handleRun = () => {
     if (!repoUrl.trim() || loading) return;
 
     // Reset previous state
@@ -366,7 +405,7 @@ const LandingPage = () => {
     setStatus("running");
 
     const url = `http://localhost:8000/scan/stream?url=${encodeURIComponent(
-      repoUrl.trim()
+      repoUrl.trim(),
     )}&os=${selectedOS}`;
 
     const es = new EventSource(url);
@@ -613,25 +652,44 @@ const LandingPage = () => {
                     type="url"
                     value={repoUrl}
                     onChange={(e) => setRepoUrl(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
+                    onKeyDown={(e) => e.key === "Enter" && handleRun()}
                     placeholder="https://github.com/username/repository"
                     className="flex-1 bg-transparent border-none px-2 py-3.5 text-foreground placeholder:text-muted-foreground/40 font-mono text-sm focus:outline-none focus:ring-0"
                   />
-                  <button
-                    onClick={handleGenerate}
-                    disabled={!repoUrl.trim() || loading}
-                    className="relative overflow-hidden rounded-full px-6 py-3.5 font-semibold text-sm transition-all duration-300
-                      disabled:opacity-50 disabled:cursor-not-allowed
-                      bg-gradient-to-r from-emerald-500 to-teal-500 text-white
-                      hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]
-                      active:scale-[0.97] group/btn"
-                  >
-                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover/btn:animate-shimmer" />
-                    <span className="relative flex items-center justify-center gap-2">
-                      Generate
-                      <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
-                    </span>
-                  </button>
+                  <div className="flex items-center gap-1.5 pr-0.5">
+                    {/* Generate button */}
+                    <button
+                      onClick={handleGenerateOnly}
+                      disabled={!repoUrl.trim() || loading}
+                      className="relative overflow-hidden rounded-full px-5 py-3 font-semibold text-sm transition-all duration-300
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                        bg-white/[0.06] border border-white/[0.1] text-foreground
+                        hover:bg-white/[0.1] hover:border-white/[0.2]
+                        active:scale-[0.97] group/gen"
+                    >
+                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover/gen:animate-shimmer" />
+                      <span className="relative flex items-center justify-center gap-2">
+                        <Zap className="h-3.5 w-3.5" />
+                        Generate
+                      </span>
+                    </button>
+                    {/* Run button */}
+                    <button
+                      onClick={handleRun}
+                      disabled={!repoUrl.trim() || loading}
+                      className="relative overflow-hidden rounded-full px-5 py-3 font-semibold text-sm transition-all duration-300
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                        bg-gradient-to-r from-emerald-500 to-teal-500 text-white
+                        hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]
+                        active:scale-[0.97] group/btn"
+                    >
+                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover/btn:animate-shimmer" />
+                      <span className="relative flex items-center justify-center gap-2">
+                        <Play className="h-3.5 w-3.5" />
+                        Run
+                      </span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
