@@ -22,6 +22,14 @@ import {
   Crown,
   Smartphone,
   KeyRound,
+  LogIn,
+  LogOut,
+  User,
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  AtSign,
 } from "lucide-react";
 import {
   Dialog,
@@ -312,9 +320,66 @@ const MarqueeRow = () => {
   );
 };
 
+/* ── Auth types ────────────────────────────────────────────── */
+interface AuthUser {
+  name: string;
+  email: string;
+  avatar?: string;
+}
+
 const LandingPage = () => {
   const [repoUrl, setRepoUrl] = useState("");
   const [selectedOS, setSelectedOS] = useState<OS>("linux");
+
+  /* ── Auth state ──────────────────────────────────────────── */
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [authTab, setAuthTab] = useState<"signin" | "signup">("signin");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authName, setAuthName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  const handleAuth = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!authEmail.trim() || !authPassword.trim()) return;
+    setAuthLoading(true);
+    setTimeout(() => {
+      const name = authTab === "signup" ? authName.trim() || authEmail.split("@")[0] : authEmail.split("@")[0];
+      setUser({ name, email: authEmail.trim() });
+      setAuthLoading(false);
+      setLoginOpen(false);
+      setAuthEmail("");
+      setAuthPassword("");
+      setAuthName("");
+      toast.success(authTab === "signup" ? "Account created!" : "Welcome back!", {
+        description: `Signed in as ${authEmail.trim()}`,
+      });
+    }, 900);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setUserMenuOpen(false);
+    toast("Signed out successfully");
+  };
+
+  const initials = user
+    ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "";
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -669,6 +734,189 @@ const LandingPage = () => {
             <Github className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">GitHub</span>
           </a>
+
+          {/* ── Login / User button ───────────────────────────── */}
+          {user ? (
+            /* logged-in: avatar + dropdown */
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen((v) => !v)}
+                className="flex items-center gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/[0.06] px-2.5 py-1.5 text-xs font-medium text-emerald-400 hover:bg-emerald-500/[0.12] hover:border-emerald-500/40 transition-all"
+              >
+                <span className="flex items-center justify-center h-5 w-5 rounded-full bg-emerald-500/20 text-[10px] font-bold text-emerald-300">
+                  {initials}
+                </span>
+                <span className="hidden sm:inline max-w-[80px] truncate">{user.name}</span>
+              </button>
+              {userMenuOpen && (
+                <div className="absolute right-0 mt-2 w-52 rounded-xl border border-white/[0.08] bg-[hsl(220,20%,6%)] shadow-2xl z-50 overflow-hidden animate-fade-in-up">
+                  <div className="px-4 py-3 border-b border-white/[0.06]">
+                    <p className="text-xs font-semibold text-foreground">{user.name}</p>
+                    <p className="text-[11px] text-muted-foreground truncate mt-0.5">{user.email}</p>
+                  </div>
+                  <div className="p-1.5">
+                    <button
+                      disabled
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-muted-foreground cursor-not-allowed opacity-50"
+                    >
+                      <User className="h-3.5 w-3.5" />
+                      Profile
+                      <span className="ml-auto text-[10px] bg-white/[0.06] px-1.5 py-0.5 rounded-full">Soon</span>
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-red-400 hover:bg-red-500/[0.08] hover:text-red-300 transition-all"
+                    >
+                      <LogOut className="h-3.5 w-3.5" />
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* logged-out: Login button */
+            <Dialog open={loginOpen} onOpenChange={(o) => { setLoginOpen(o); if (!o) { setAuthEmail(""); setAuthPassword(""); setAuthName(""); setShowPassword(false); } }}>
+              <DialogTrigger asChild>
+                <button className="flex items-center gap-2 rounded-lg border border-white/[0.10] bg-white/[0.04] px-3.5 py-1.5 text-xs font-semibold text-foreground hover:bg-white/[0.08] hover:border-white/[0.16] transition-all">
+                  <LogIn className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Sign in</span>
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[400px] bg-[hsl(220,20%,6%)] border-white/[0.08] text-foreground p-0 overflow-hidden">
+                {/* dialog gradient top bar */}
+                <div className="h-1 w-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500" />
+                <div className="px-6 py-6">
+                  <DialogHeader className="mb-5">
+                    <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                      <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                        <LogIn className="h-4 w-4 text-emerald-400" />
+                      </span>
+                      Welcome back
+                    </DialogTitle>
+                    <DialogDescription className="text-muted-foreground text-xs">
+                      Sign in to save environments, access history &amp; unlock Premium.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  {/* tab switcher */}
+                  <div className="flex mb-5 rounded-lg bg-white/[0.03] border border-white/[0.06] p-1 gap-1">
+                    {(["signin", "signup"] as const).map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => setAuthTab(t)}
+                        className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                          authTab === t
+                            ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {t === "signin" ? "Sign in" : "Create account"}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* GitHub OAuth */}
+                  <button
+                    onClick={() => {
+                      toast("GitHub OAuth coming soon!", { description: "Use email & password for now." });
+                    }}
+                    className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-white/[0.08] bg-white/[0.03] py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.06] transition-all mb-4"
+                  >
+                    <Github className="h-4 w-4" />
+                    Continue with GitHub
+                  </button>
+
+                  {/* divider */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex-1 h-px bg-white/[0.06]" />
+                    <span className="text-[11px] text-muted-foreground/50">or</span>
+                    <div className="flex-1 h-px bg-white/[0.06]" />
+                  </div>
+
+                  {/* form */}
+                  <form onSubmit={handleAuth} className="space-y-3">
+                    {authTab === "signup" && (
+                      <div className="relative">
+                        <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+                        <input
+                          type="text"
+                          placeholder="Display name"
+                          value={authName}
+                          onChange={(e) => setAuthName(e.target.value)}
+                          className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg pl-9 pr-4 py-2.5 text-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] transition-all"
+                        />
+                      </div>
+                    )}
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+                      <input
+                        type="email"
+                        placeholder="Email address"
+                        value={authEmail}
+                        onChange={(e) => setAuthEmail(e.target.value)}
+                        required
+                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg pl-9 pr-4 py-2.5 text-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] transition-all"
+                      />
+                    </div>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Password"
+                        value={authPassword}
+                        onChange={(e) => setAuthPassword(e.target.value)}
+                        required
+                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg pl-9 pr-10 py-2.5 text-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] transition-all"
+                      />
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+
+                    {authTab === "signin" && (
+                      <div className="text-right">
+                        <button type="button" onClick={() => toast("Password reset coming soon!")} className="text-[11px] text-muted-foreground/50 hover:text-emerald-400 transition-colors">
+                          Forgot password?
+                        </button>
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={authLoading || !authEmail.trim() || !authPassword.trim()}
+                      className="w-full relative overflow-hidden rounded-lg py-2.5 text-xs font-semibold text-white
+                        bg-gradient-to-r from-emerald-500 to-teal-500
+                        hover:shadow-[0_0_16px_rgba(16,185,129,0.35)]
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                        transition-all active:scale-[0.98]"
+                    >
+                      {authLoading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          {authTab === "signin" ? "Signing in…" : "Creating account…"}
+                        </span>
+                      ) : (
+                        authTab === "signin" ? "Sign in" : "Create account"
+                      )}
+                    </button>
+                  </form>
+
+                  <p className="text-center text-[11px] text-muted-foreground/40 mt-4">
+                    {authTab === "signin" ? "No account? " : "Already have one? "}
+                    <button onClick={() => setAuthTab(authTab === "signin" ? "signup" : "signin")} className="text-emerald-400/70 hover:text-emerald-400 transition-colors underline-offset-2 hover:underline">
+                      {authTab === "signin" ? "Create one" : "Sign in"}
+                    </button>
+                  </p>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </nav>
 
