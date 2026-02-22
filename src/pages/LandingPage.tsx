@@ -934,17 +934,6 @@ const LandingPage = () => {
                   in Seconds
                 </span>
               </h1>
-
-              <p className="text-sm md:text-base text-muted-foreground max-w-md mx-auto leading-relaxed">
-                Paste a GitHub URL &mdash; get{" "}
-                <code className="px-1 py-0.5 rounded bg-white/[0.05] border border-white/[0.08] text-foreground font-mono text-xs">
-                  devcontainer.json
-                </code>{" "}
-                +{" "}
-                <code className="px-1 py-0.5 rounded bg-white/[0.05] border border-white/[0.08] text-foreground font-mono text-xs">
-                  docker-compose.yml
-                </code>
-              </p>
             </div>
 
             {/* ── marquee ──────────────────────────────────────── */}
