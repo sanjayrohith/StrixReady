@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import {
   Github,
@@ -11,6 +11,12 @@ import {
   Scan,
   Download,
   HelpCircle,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Circle,
+  ExternalLink,
+  RotateCcw,
 } from "lucide-react";
 import {
   Dialog,
@@ -28,6 +34,145 @@ import {
 } from "@/components/ui/accordion";
 
 type OS = "windows" | "macos" | "linux";
+type ScanStatus = "idle" | "running" | "done" | "error";
+
+interface LogEntry {
+  step: string;
+  message: string;
+  data?: any;
+}
+
+/* ── step → icon & colour mapping ──────────────────────────────── */
+const STEP_STYLE: Record<string, { icon: React.ReactNode; color: string }> = {
+  clone:    { icon: <Download className="h-3.5 w-3.5" />, color: "text-sky-400" },
+  detect:   { icon: <Cpu className="h-3.5 w-3.5" />,      color: "text-violet-400" },
+  generate: { icon: <FileJson className="h-3.5 w-3.5" />,  color: "text-amber-400" },
+  compose:  { icon: <GitBranch className="h-3.5 w-3.5" />, color: "text-rose-400" },
+  build:    { icon: <Terminal className="h-3.5 w-3.5" />,  color: "text-teal-400" },
+  run:      { icon: <Sparkles className="h-3.5 w-3.5" />,  color: "text-emerald-400" },
+  done:     { icon: <CheckCircle2 className="h-3.5 w-3.5" />, color: "text-emerald-400" },
+  error:    { icon: <AlertCircle className="h-3.5 w-3.5" />,  color: "text-red-400" },
+  end:      { icon: <Circle className="h-3.5 w-3.5" />,       color: "text-muted-foreground" },
+};
+const DEFAULT_STEP_STYLE = { icon: <Circle className="h-3.5 w-3.5" />, color: "text-muted-foreground" };
+
+/* ── Log terminal component ────────────────────────────────────── */
+const LogPanel = ({
+  logs,
+  status,
+  onReset,
+  doneData,
+}: {
+  logs: LogEntry[];
+  status: ScanStatus;
+  onReset: () => void;
+  doneData: any;
+}) => {
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logs]);
+
+  return (
+    <div className="w-full max-w-2xl mx-auto animate-fade-in-up">
+      {/* terminal chrome */}
+      <div className="rounded-2xl border border-white/[0.08] bg-[hsl(220,20%,5%)] shadow-2xl overflow-hidden">
+        {/* title bar */}
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.06] bg-white/[0.02]">
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-red-500/70" />
+              <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/70" />
+              <span className="h-2.5 w-2.5 rounded-full bg-green-500/70" />
+            </div>
+            <span className="text-[11px] font-mono text-muted-foreground ml-2">strixready — scan</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {status === "running" && (
+              <span className="flex items-center gap-1.5 text-[10px] font-medium text-emerald-400">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                LIVE
+              </span>
+            )}
+            {(status === "done" || status === "error") && (
+              <button
+                onClick={onReset}
+                className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <RotateCcw className="h-3 w-3" />
+                New Scan
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* log body */}
+        <div className="max-h-[260px] overflow-y-auto p-4 space-y-1 font-mono text-xs scrollbar-thin">
+          {logs.map((log, i) => {
+            const style = STEP_STYLE[log.step] || DEFAULT_STEP_STYLE;
+            return (
+              <div
+                key={i}
+                className={`flex items-start gap-2.5 py-1 px-2 rounded-md transition-colors ${
+                  log.step === "error"
+                    ? "bg-red-500/[0.06]"
+                    : log.step === "done"
+                    ? "bg-emerald-500/[0.06]"
+                    : "hover:bg-white/[0.02]"
+                }`}
+              >
+                <span className={`flex-shrink-0 mt-0.5 ${style.color}`}>{style.icon}</span>
+                <span className={`flex-shrink-0 font-semibold uppercase tracking-wider text-[10px] min-w-[60px] mt-[1px] ${style.color}`}>
+                  {log.step}
+                </span>
+                <span className="text-muted-foreground leading-relaxed">{log.message}</span>
+              </div>
+            );
+          })}
+
+          {status === "running" && (
+            <div className="flex items-center gap-2.5 py-1 px-2 text-muted-foreground/50">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <span className="animate-pulse">Waiting for next update…</span>
+            </div>
+          )}
+
+          <div ref={bottomRef} />
+        </div>
+
+        {/* done banner */}
+        {status === "done" && doneData && (
+          <div className="border-t border-white/[0.06] bg-emerald-500/[0.05] px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-emerald-400 text-xs font-medium">
+              <CheckCircle2 className="h-4 w-4" />
+              Environment is running
+              {doneData.port && <span className="text-muted-foreground">on port {doneData.port}</span>}
+            </div>
+            {doneData.port && (
+              <a
+                href={`http://localhost:${doneData.port}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                Open <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* error banner */}
+        {status === "error" && (
+          <div className="border-t border-white/[0.06] bg-red-500/[0.05] px-4 py-3 flex items-center gap-2 text-red-400 text-xs font-medium">
+            <AlertCircle className="h-4 w-4" />
+            Scan failed — check the backend logs for details.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 // Windows logo – four coloured panes (Microsoft brand colours), square 24×24 grid
 const WindowsIcon = () => (
@@ -164,10 +309,17 @@ const MarqueeRow = () => {
 
 const LandingPage = () => {
   const [repoUrl, setRepoUrl] = useState("");
-  const [loading, setLoading] = useState(false);
   const [selectedOS, setSelectedOS] = useState<OS>("linux");
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const rootRef = useRef<HTMLDivElement>(null);
+
+  /* ── SSE state ─────────────────────────────────────────────── */
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [status, setStatus] = useState<ScanStatus>("idle");
+  const [doneData, setDoneData] = useState<any>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+
+  const loading = status === "running";
 
   useEffect(() => {
     const ua = navigator.userAgent.toLowerCase();
@@ -189,31 +341,73 @@ const LandingPage = () => {
     return () => window.removeEventListener("mousemove", handler);
   }, []);
 
-  const handleGenerate = async () => {
-    if (!repoUrl.trim()) return;
-    setLoading(true);
+  /* ── clean up EventSource on unmount ────────────────────────── */
+  useEffect(() => {
+    return () => {
+      eventSourceRef.current?.close();
+    };
+  }, []);
 
-    try {
-      // Send the URL to the backend
-      const response = await fetch("http://localhost:8000/scan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: repoUrl.trim(), os: selectedOS }),
-      });
+  const resetScan = useCallback(() => {
+    eventSourceRef.current?.close();
+    eventSourceRef.current = null;
+    setLogs([]);
+    setStatus("idle");
+    setDoneData(null);
+    setRepoUrl("");
+  }, []);
 
-      if (!response.ok) throw new Error("Failed to setup environment");
+  const handleGenerate = () => {
+    if (!repoUrl.trim() || loading) return;
 
-      toast.success("Environment setup initiated!", {
-        description: "The backend is now cloning and configuring your environment.",
-      });
-      setRepoUrl("");
-    } catch (error) {
-      toast.error("Setup failed", {
-        description: "Could not connect to the backend. Please ensure it is running.",
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Reset previous state
+    setLogs([]);
+    setDoneData(null);
+    setStatus("running");
+
+    const url = `http://localhost:8000/scan/stream?url=${encodeURIComponent(
+      repoUrl.trim()
+    )}&os=${selectedOS}`;
+
+    const es = new EventSource(url);
+    eventSourceRef.current = es;
+
+    es.onmessage = (event) => {
+      try {
+        const data: LogEntry = JSON.parse(event.data);
+        setLogs((prev) => [...prev, data]);
+
+        if (data.step === "done") {
+          setStatus("done");
+          setDoneData(data.data ?? null);
+          toast.success("Environment ready!", {
+            description: data.message,
+          });
+        }
+        if (data.step === "error") {
+          setStatus("error");
+          toast.error("Scan failed", {
+            description: data.message,
+          });
+        }
+        if (data.step === "end") {
+          es.close();
+          eventSourceRef.current = null;
+        }
+      } catch {
+        // ignore malformed events
+      }
+    };
+
+    es.onerror = () => {
+      setStatus("error");
+      setLogs((prev) => [
+        ...prev,
+        { step: "error", message: "Connection lost — is the backend running?" },
+      ]);
+      es.close();
+      eventSourceRef.current = null;
+    };
   };
 
   const themeClass =
@@ -349,111 +543,117 @@ const LandingPage = () => {
 
       {/* ── main content ───────────────────────────────────────── */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 gap-0 min-h-0">
-        {/* headline */}
-        <div className="text-center animate-fade-in-up flex-shrink-0">
-          
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[1.1] tracking-tight text-foreground mb-3">
-            Dev Environments{" "}
-            <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
-              in Seconds
-            </span>
-          </h1>
+        {status === "idle" ? (
+          /* ── idle view: headline + marquee + input ──────────── */
+          <>
+            {/* headline */}
+            <div className="text-center animate-fade-in-up flex-shrink-0">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[1.1] tracking-tight text-foreground mb-3">
+                Dev Environments{" "}
+                <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
+                  in Seconds
+                </span>
+              </h1>
 
-          <p className="text-sm md:text-base text-muted-foreground max-w-md mx-auto leading-relaxed">
-            Paste a GitHub URL &mdash; get{" "}
-            <code className="px-1 py-0.5 rounded bg-white/[0.05] border border-white/[0.08] text-foreground font-mono text-xs">
-              devcontainer.json
-            </code>{" "}
-            +{" "}
-            <code className="px-1 py-0.5 rounded bg-white/[0.05] border border-white/[0.08] text-foreground font-mono text-xs">
-              docker-compose.yml
-            </code>
-          </p>
-        </div>
-
-        {/* ── marquee ──────────────────────────────────────────── */}
-        <div className="w-full max-w-5xl mx-auto mt-6 mb-6 flex-shrink-0 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-          <p className="text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground/50 font-medium mb-2">
-            How it works
-          </p>
-          <MarqueeRow />
-        </div>
-
-        {/* ── input section ────────────────────────────────────── */}
-        <div className="w-full max-w-xl mx-auto flex-shrink-0 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-          {/* OS selector */}
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold whitespace-nowrap">
-              Select OS
-            </span>
-            <div className="inline-flex gap-0.5 rounded-xl bg-white/[0.03] border border-white/[0.06] p-1">
-              {osOptions.map((os) => (
-                <button
-                  key={os.value}
-                  onClick={() => setSelectedOS(os.value)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                    selectedOS === os.value
-                      ? "bg-primary text-primary-foreground shadow-md"
-                      : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
-                  }`}
-                >
-                  {os.icon}
-                  {os.label}
-                </button>
-              ))}
+              <p className="text-sm md:text-base text-muted-foreground max-w-md mx-auto leading-relaxed">
+                Paste a GitHub URL &mdash; get{" "}
+                <code className="px-1 py-0.5 rounded bg-white/[0.05] border border-white/[0.08] text-foreground font-mono text-xs">
+                  devcontainer.json
+                </code>{" "}
+                +{" "}
+                <code className="px-1 py-0.5 rounded bg-white/[0.05] border border-white/[0.08] text-foreground font-mono text-xs">
+                  docker-compose.yml
+                </code>
+              </p>
             </div>
-          </div>
 
-          {/* input + button */}
-          <div className="relative group mt-6">
-            {/* Animated glowing background that appears on focus/hover */}
-            <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 opacity-20 group-hover:opacity-40 group-focus-within:opacity-100 blur-md transition-all duration-500 animate-gradient bg-[length:200%_auto]" />
-            
-            <div className="relative flex items-center w-full rounded-[2rem] bg-[hsl(220,20%,6%)] border border-white/[0.08] p-1.5 shadow-2xl transition-all duration-300 group-focus-within:border-emerald-500/50 group-focus-within:bg-[hsl(220,20%,4%)]">
-              <div className="pl-4 pr-2 text-muted-foreground/50 group-focus-within:text-emerald-400 transition-colors">
-                <Github className="h-5 w-5" />
+            {/* ── marquee ──────────────────────────────────────── */}
+            <div className="w-full max-w-5xl mx-auto mt-6 mb-6 flex-shrink-0 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+              <p className="text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground/50 font-medium mb-2">
+                How it works
+              </p>
+              <MarqueeRow />
+            </div>
+
+            {/* ── input section ────────────────────────────────── */}
+            <div className="w-full max-w-xl mx-auto flex-shrink-0 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+              {/* OS selector */}
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold whitespace-nowrap">
+                  Select OS
+                </span>
+                <div className="inline-flex gap-0.5 rounded-xl bg-white/[0.03] border border-white/[0.06] p-1">
+                  {osOptions.map((os) => (
+                    <button
+                      key={os.value}
+                      onClick={() => setSelectedOS(os.value)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                        selectedOS === os.value
+                          ? "bg-primary text-primary-foreground shadow-md"
+                          : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      {os.icon}
+                      {os.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <input
-                type="url"
-                value={repoUrl}
-                onChange={(e) => setRepoUrl(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-                placeholder="https://github.com/username/repository"
-                className="flex-1 bg-transparent border-none px-2 py-3.5 text-foreground placeholder:text-muted-foreground/40 font-mono text-sm focus:outline-none focus:ring-0"
-              />
-              <button
-                onClick={handleGenerate}
-                disabled={!repoUrl.trim() || loading}
-                className="relative overflow-hidden rounded-full px-6 py-3.5 font-semibold text-sm transition-all duration-300
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  bg-gradient-to-r from-emerald-500 to-teal-500 text-white
-                  hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]
-                  active:scale-[0.97] group/btn"
-              >
-                {/* Button hover shine effect */}
-                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover/btn:animate-shimmer" />
-                
-                <span className="relative flex items-center justify-center gap-2">
-                  {loading ? (
-                    <>
-                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      Analyzing…
-                    </>
-                  ) : (
-                    <>
+
+              {/* input + button */}
+              <div className="relative group mt-6">
+                <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 opacity-20 group-hover:opacity-40 group-focus-within:opacity-100 blur-md transition-all duration-500 animate-gradient bg-[length:200%_auto]" />
+
+                <div className="relative flex items-center w-full rounded-[2rem] bg-[hsl(220,20%,6%)] border border-white/[0.08] p-1.5 shadow-2xl transition-all duration-300 group-focus-within:border-emerald-500/50 group-focus-within:bg-[hsl(220,20%,4%)]">
+                  <div className="pl-4 pr-2 text-muted-foreground/50 group-focus-within:text-emerald-400 transition-colors">
+                    <Github className="h-5 w-5" />
+                  </div>
+                  <input
+                    type="url"
+                    value={repoUrl}
+                    onChange={(e) => setRepoUrl(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
+                    placeholder="https://github.com/username/repository"
+                    className="flex-1 bg-transparent border-none px-2 py-3.5 text-foreground placeholder:text-muted-foreground/40 font-mono text-sm focus:outline-none focus:ring-0"
+                  />
+                  <button
+                    onClick={handleGenerate}
+                    disabled={!repoUrl.trim() || loading}
+                    className="relative overflow-hidden rounded-full px-6 py-3.5 font-semibold text-sm transition-all duration-300
+                      disabled:opacity-50 disabled:cursor-not-allowed
+                      bg-gradient-to-r from-emerald-500 to-teal-500 text-white
+                      hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]
+                      active:scale-[0.97] group/btn"
+                  >
+                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover/btn:animate-shimmer" />
+                    <span className="relative flex items-center justify-center gap-2">
                       Generate
                       <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
-                    </>
-                  )}
-                </span>
-              </button>
+                    </span>
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </>
+        ) : (
+          /* ── scan view: condensed input + live terminal ────── */
+          <>
+            {/* compact repo badge */}
+            <div className="flex items-center gap-3 mb-5 animate-fade-in-up">
+              <div className="flex items-center gap-2 rounded-full bg-white/[0.04] border border-white/[0.08] px-4 py-2">
+                <Github className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-mono text-foreground truncate max-w-[300px]">{repoUrl}</span>
+              </div>
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold px-2 py-1 rounded bg-white/[0.04] border border-white/[0.06]">
+                {selectedOS}
+              </span>
+            </div>
+
+            {/* live log terminal */}
+            <LogPanel logs={logs} status={status} onReset={resetScan} doneData={doneData} />
+          </>
+        )}
       </main>
 
       {/* ── footer ─────────────────────────────────────────────── */}
