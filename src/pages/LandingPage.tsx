@@ -980,8 +980,20 @@ const LandingPage = () => {
                 </div>
               </div>
 
+              {/* subtitle moved here — below OS selector */}
+              <p className="text-center text-sm text-muted-foreground leading-relaxed mb-5">
+                Paste a GitHub URL &mdash; get{" "}
+                <code className="px-1 py-0.5 rounded bg-white/[0.05] border border-white/[0.08] text-foreground font-mono text-xs">
+                  devcontainer.json
+                </code>{" "}
+                +{" "}
+                <code className="px-1 py-0.5 rounded bg-white/[0.05] border border-white/[0.08] text-foreground font-mono text-xs">
+                  docker-compose.yml
+                </code>
+              </p>
+
               {/* input + button */}
-              <div className="relative group mt-6">
+              <div className="relative group">
                 <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 opacity-20 group-hover:opacity-40 group-focus-within:opacity-100 blur-md transition-all duration-500 animate-gradient bg-[length:200%_auto]" />
 
                 <div className="relative flex items-center w-full rounded-[2rem] bg-[hsl(220,20%,6%)] border border-white/[0.08] p-1.5 shadow-2xl transition-all duration-300 group-focus-within:border-emerald-500/50 group-focus-within:bg-[hsl(220,20%,4%)]">
