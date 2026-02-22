@@ -17,8 +17,14 @@ import {
   Circle,
   ExternalLink,
   RotateCcw,
+<<<<<<< Updated upstream
   Play,
   Zap,
+=======
+  Crown,
+  Smartphone,
+  KeyRound,
+>>>>>>> Stashed changes
 } from "lucide-react";
 import {
   Dialog,
@@ -508,6 +514,95 @@ const LandingPage = () => {
           </span>
         </div>
         <div className="flex items-center gap-3">
+          {/* ── Premium tier button ────────────────────────────── */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/[0.06] px-3.5 py-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/[0.12] hover:border-amber-500/50 transition-all shadow-[0_0_12px_rgba(245,158,11,0.08)] hover:shadow-[0_0_18px_rgba(245,158,11,0.2)]">
+                <Crown className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Premium</span>
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[520px] bg-[hsl(220,20%,6%)] border-white/[0.08] text-foreground">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2.5 text-xl font-bold">
+                  <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <Crown className="h-4 w-4 text-amber-400" />
+                  </span>
+                  StrixReady Premium
+                </DialogTitle>
+                <DialogDescription className="text-muted-foreground">
+                  Unlock the full power of instant dev environments — from any device, anywhere.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="mt-4 space-y-3">
+                {/* Free tier */}
+                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-semibold text-foreground">Free</span>
+                    <span className="text-xs text-muted-foreground px-2 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.08]">Current</span>
+                  </div>
+                  <ul className="space-y-2">
+                    {[
+                      "Public GitHub repositories",
+                      "devcontainer.json generation",
+                      "docker-compose.yml generation",
+                      "Windows, macOS & Linux support",
+                    ].map((f) => (
+                      <li key={f} className="flex items-center gap-2.5 text-xs text-muted-foreground">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500/60 flex-shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Premium tier */}
+                <div className="relative rounded-xl border border-amber-500/25 bg-amber-500/[0.04] p-4 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.06] to-transparent pointer-events-none" />
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-amber-300">
+                      <Crown className="h-3.5 w-3.5" />
+                      Premium
+                    </span>
+                    <span className="text-xs text-amber-400 font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+                      Coming Soon
+                    </span>
+                  </div>
+                  <ul className="space-y-2">
+                    {[
+                      { icon: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 flex-shrink-0" />, text: "Private repository access via OAuth" },
+                      { icon: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 flex-shrink-0" />, text: "Priority AI scanning & faster generation" },
+                      { icon: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 flex-shrink-0" />, text: "Saved environment history & templates" },
+                    ].map((f) => (
+                      <li key={f.text} className="flex items-center gap-2.5 text-xs text-muted-foreground">
+                        {f.icon}
+                        {f.text}
+                      </li>
+                    ))}
+                    {/* Mobile SSH feature — hero item */}
+                    <li className="flex items-start gap-2.5 mt-3 rounded-lg bg-amber-500/[0.08] border border-amber-500/20 px-3 py-2.5">
+                      <div className="flex items-center gap-1 mt-0.5 flex-shrink-0">
+                        <Smartphone className="h-3.5 w-3.5 text-amber-400" />
+                        <KeyRound className="h-3 w-3 text-amber-300" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-amber-300 leading-tight">Mobile Setup via SSH Key</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                          Authenticate with your SSH key directly from your phone — spin up a dev container remotely without touching a laptop.
+                        </p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+
+                <p className="text-center text-[11px] text-muted-foreground/50 pt-1">
+                  Premium features are in active development &mdash; star the repo to stay updated.
+                </p>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <Dialog>
             <DialogTrigger asChild>
               <button className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.06] transition-all">
