@@ -17,14 +17,11 @@ import {
   Circle,
   ExternalLink,
   RotateCcw,
-<<<<<<< Updated upstream
   Play,
   Zap,
-=======
   Crown,
   Smartphone,
   KeyRound,
->>>>>>> Stashed changes
 } from "lucide-react";
 import {
   Dialog,
