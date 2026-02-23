@@ -88,11 +88,11 @@ const LogPanel = ({
   }, [logs]);
 
   return (
-    <div className="w-full max-w-2xl mx-auto animate-fade-in-up">
+    <div className="w-full max-w-2xl mx-auto animate-fade-in-up px-1 md:px-0">
       {/* terminal chrome */}
-      <div className="rounded-2xl border border-white/[0.08] bg-[hsl(220,20%,5%)] shadow-2xl overflow-hidden">
+      <div className="rounded-xl md:rounded-2xl border border-white/[0.08] bg-[hsl(220,20%,5%)] shadow-2xl overflow-hidden">
         {/* title bar */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.06] bg-white/[0.02]">
+        <div className="flex items-center justify-between px-3 md:px-4 py-2 md:py-2.5 border-b border-white/[0.06] bg-white/[0.02]">
           <div className="flex items-center gap-2">
             <div className="flex gap-1.5">
               <span className="h-2.5 w-2.5 rounded-full bg-red-500/70" />
@@ -121,7 +121,7 @@ const LogPanel = ({
         </div>
 
         {/* log body */}
-        <div className="max-h-[260px] overflow-y-auto p-4 space-y-1 font-mono text-xs scrollbar-thin">
+        <div className="max-h-[220px] md:max-h-[260px] overflow-y-auto p-3 md:p-4 space-y-1 font-mono text-[11px] md:text-xs scrollbar-thin">
           {logs.map((log, i) => {
             const style = STEP_STYLE[log.step] || DEFAULT_STEP_STYLE;
             return (
@@ -136,10 +136,10 @@ const LogPanel = ({
                 }`}
               >
                 <span className={`flex-shrink-0 mt-0.5 ${style.color}`}>{style.icon}</span>
-                <span className={`flex-shrink-0 font-semibold uppercase tracking-wider text-[10px] min-w-[60px] mt-[1px] ${style.color}`}>
+                <span className={`flex-shrink-0 font-semibold uppercase tracking-wider text-[9px] md:text-[10px] min-w-[50px] md:min-w-[60px] mt-[1px] ${style.color}`}>
                   {log.step}
                 </span>
-                <span className="text-muted-foreground leading-relaxed">{log.message}</span>
+                <span className="text-muted-foreground leading-relaxed break-all sm:break-normal">{log.message}</span>
               </div>
             );
           })}
@@ -327,6 +327,9 @@ interface AuthUser {
   avatar?: string;
 }
 
+/* ── Dynamic API base so it works from any device on the network ── */
+const API_BASE = `http://${window.location.hostname}:8000`;
+
 const LandingPage = () => {
   const [repoUrl, setRepoUrl] = useState("");
   const [selectedOS, setSelectedOS] = useState<OS>("linux");
@@ -434,7 +437,7 @@ const LandingPage = () => {
     setDoneData(null);
 
     try {
-      const response = await fetch("http://localhost:8000/scan", {
+      const response = await fetch(`${API_BASE}/scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: repoUrl.trim(), os: selectedOS }),
@@ -472,7 +475,7 @@ const LandingPage = () => {
     setDoneData(null);
     setStatus("running");
 
-    const url = `http://localhost:8000/scan/stream?url=${encodeURIComponent(
+    const url = `${API_BASE}/scan/stream?url=${encodeURIComponent(
       repoUrl.trim(),
     )}&os=${selectedOS}`;
 
@@ -533,7 +536,7 @@ const LandingPage = () => {
   return (
     <div
       ref={rootRef}
-      className={`h-screen flex flex-col ${themeClass} relative overflow-hidden bg-[hsl(220,20%,4%)]`}
+      className={`min-h-screen md:h-screen flex flex-col ${themeClass} relative overflow-y-auto md:overflow-hidden bg-[hsl(220,20%,4%)]`}
     >
       {/* ── ambient orbs ───────────────────────────────────────── */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -561,9 +564,9 @@ const LandingPage = () => {
       />
 
       {/* ── nav ────────────────────────────────────────────────── */}
-      <nav className="relative z-20 flex items-center justify-between px-6 py-4 md:px-10 flex-shrink-0">
-        <div className="flex items-center gap-3 group cursor-pointer">
-          <div className="relative h-9 w-9 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.15)] border border-emerald-500/20 group-hover:shadow-[0_0_25px_rgba(16,185,129,0.35)] group-hover:border-emerald-500/40 transition-all duration-500">
+      <nav className="relative z-20 flex items-center justify-between px-4 py-3 md:px-10 md:py-4 flex-shrink-0">
+        <div className="flex items-center gap-2 md:gap-3 group cursor-pointer">
+          <div className="relative h-8 w-8 md:h-9 md:w-9 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.15)] border border-emerald-500/20 group-hover:shadow-[0_0_25px_rgba(16,185,129,0.35)] group-hover:border-emerald-500/40 transition-all duration-500">
             <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <img
               src="/logo.png"
@@ -571,15 +574,15 @@ const LandingPage = () => {
               className="h-full w-full object-contain p-1 transform group-hover:scale-110 transition-transform duration-500 relative z-10"
             />
           </div>
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 bg-[length:200%_auto] animate-gradient text-lg font-extrabold tracking-tight drop-shadow-[0_0_15px_rgba(52,211,153,0.2)] group-hover:drop-shadow-[0_0_20px_rgba(52,211,153,0.4)] transition-all duration-500">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-400 bg-[length:200%_auto] animate-gradient text-base md:text-lg font-extrabold tracking-tight drop-shadow-[0_0_15px_rgba(52,211,153,0.2)] group-hover:drop-shadow-[0_0_20px_rgba(52,211,153,0.4)] transition-all duration-500">
             StrixReady
           </span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 md:gap-3">
           {/* ── Premium tier button ────────────────────────────── */}
           <Dialog>
             <DialogTrigger asChild>
-              <button className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/[0.06] px-3.5 py-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/[0.12] hover:border-amber-500/50 transition-all shadow-[0_0_12px_rgba(245,158,11,0.08)] hover:shadow-[0_0_18px_rgba(245,158,11,0.2)]">
+              <button className="flex items-center gap-1.5 md:gap-2 rounded-lg border border-amber-500/30 bg-amber-500/[0.06] px-2.5 py-1.5 md:px-3.5 text-xs font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-500/[0.12] hover:border-amber-500/50 transition-all shadow-[0_0_12px_rgba(245,158,11,0.08)] hover:shadow-[0_0_18px_rgba(245,158,11,0.2)]">
                 <Crown className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Premium</span>
               </button>
@@ -667,7 +670,7 @@ const LandingPage = () => {
 
           <Dialog>
             <DialogTrigger asChild>
-              <button className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.06] transition-all">
+              <button className="flex items-center gap-1.5 md:gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-1.5 md:px-3.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.06] transition-all">
                 <HelpCircle className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">FAQ & Docs</span>
               </button>
@@ -729,7 +732,7 @@ const LandingPage = () => {
             href="https://github.com/sanjayrohith/StrixReady"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.06] transition-all"
+            className="flex items-center gap-1.5 md:gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-1.5 md:px-3.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.06] transition-all"
           >
             <Github className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">GitHub</span>
@@ -921,14 +924,14 @@ const LandingPage = () => {
       </nav>
 
       {/* ── main content ───────────────────────────────────────── */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 gap-0 min-h-0">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-3 md:px-4 gap-0 min-h-0 py-4 md:py-0">
 
         {status === "idle" ? (
           /* ── idle view: headline + marquee + input ──────────── */
           <>
             {/* headline */}
             <div className="text-center animate-fade-in-up flex-shrink-0">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[1.1] tracking-tight text-foreground mb-3">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight text-foreground mb-2 md:mb-3">
                 Dev Environments{" "}
                 <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
                   in Seconds
@@ -937,7 +940,7 @@ const LandingPage = () => {
             </div>
 
             {/* ── marquee ──────────────────────────────────────── */}
-            <div className="w-full max-w-5xl mx-auto mt-6 mb-6 flex-shrink-0 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+            <div className="w-full max-w-5xl mx-auto mt-4 mb-4 md:mt-6 md:mb-6 flex-shrink-0 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
               <p className="text-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground/50 font-medium mb-2">
                 How it works
               </p>
@@ -947,8 +950,8 @@ const LandingPage = () => {
             {/* ── input section ────────────────────────────────── */}
             <div className="w-full max-w-xl mx-auto flex-shrink-0 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
               {/* OS selector */}
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold whitespace-nowrap">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 mb-3 md:mb-4">
+                <span className="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold whitespace-nowrap">
                   Select OS
                 </span>
                 <div className="inline-flex gap-0.5 rounded-xl bg-white/[0.03] border border-white/[0.06] p-1">
@@ -956,21 +959,22 @@ const LandingPage = () => {
                     <button
                       key={os.value}
                       onClick={() => setSelectedOS(os.value)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                      className={`flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
                         selectedOS === os.value
                           ? "bg-primary text-primary-foreground shadow-md"
                           : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
                       }`}
                     >
                       {os.icon}
-                      {os.label}
+                      <span className="hidden xs:inline">{os.label}</span>
+                      <span className="xs:hidden text-[10px]">{os.label}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
               {/* subtitle moved here — below OS selector */}
-              <p className="text-center text-sm text-muted-foreground leading-relaxed mb-5">
+              <p className="text-center text-xs sm:text-sm text-muted-foreground leading-relaxed mb-4 md:mb-5 px-2">
                 Paste a GitHub URL &mdash; get{" "}
                 <code className="px-1 py-0.5 rounded bg-white/[0.05] border border-white/[0.08] text-foreground font-mono text-xs">
                   devcontainer.json
@@ -981,51 +985,83 @@ const LandingPage = () => {
                 </code>
               </p>
 
-              {/* input + button */}
+              {/* input + buttons */}
               <div className="relative group">
-                <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 opacity-20 group-hover:opacity-40 group-focus-within:opacity-100 blur-md transition-all duration-500 animate-gradient bg-[length:200%_auto]" />
+                <div className="absolute -inset-1 rounded-2xl md:rounded-[2rem] bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 opacity-20 group-hover:opacity-40 group-focus-within:opacity-100 blur-md transition-all duration-500 animate-gradient bg-[length:200%_auto]" />
 
-                <div className="relative flex items-center w-full rounded-[2rem] bg-[hsl(220,20%,6%)] border border-white/[0.08] p-1.5 shadow-2xl transition-all duration-300 group-focus-within:border-emerald-500/50 group-focus-within:bg-[hsl(220,20%,4%)]">
-                  <div className="pl-4 pr-2 text-muted-foreground/50 group-focus-within:text-emerald-400 transition-colors">
-                    <Github className="h-5 w-5" />
+                <div className="relative w-full rounded-2xl md:rounded-[2rem] bg-[hsl(220,20%,6%)] border border-white/[0.08] p-1.5 shadow-2xl transition-all duration-300 group-focus-within:border-emerald-500/50 group-focus-within:bg-[hsl(220,20%,4%)]">
+                  {/* input row */}
+                  <div className="flex items-center w-full">
+                    <div className="pl-3 md:pl-4 pr-2 text-muted-foreground/50 group-focus-within:text-emerald-400 transition-colors">
+                      <Github className="h-4 w-4 md:h-5 md:w-5" />
+                    </div>
+                    <input
+                      type="url"
+                      value={repoUrl}
+                      onChange={(e) => setRepoUrl(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleRun()}
+                      placeholder="github.com/user/repo"
+                      className="flex-1 min-w-0 bg-transparent border-none px-2 py-3 md:py-3.5 text-foreground placeholder:text-muted-foreground/40 font-mono text-xs md:text-sm focus:outline-none focus:ring-0"
+                    />
+                    {/* Desktop: inline buttons */}
+                    <div className="hidden sm:flex items-center gap-1.5 pr-0.5">
+                      <button
+                        onClick={handleGenerateOnly}
+                        disabled={!repoUrl.trim() || loading}
+                        className="relative overflow-hidden rounded-full px-5 py-3 font-semibold text-sm transition-all duration-300
+                          disabled:opacity-50 disabled:cursor-not-allowed
+                          bg-white/[0.06] border border-white/[0.1] text-foreground
+                          hover:bg-white/[0.1] hover:border-white/[0.2]
+                          active:scale-[0.97] group/gen"
+                      >
+                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover/gen:animate-shimmer" />
+                        <span className="relative flex items-center justify-center gap-2">
+                          <Zap className="h-3.5 w-3.5" />
+                          Generate
+                        </span>
+                      </button>
+                      <button
+                        onClick={handleRun}
+                        disabled={!repoUrl.trim() || loading}
+                        className="relative overflow-hidden rounded-full px-5 py-3 font-semibold text-sm transition-all duration-300
+                          disabled:opacity-50 disabled:cursor-not-allowed
+                          bg-gradient-to-r from-emerald-500 to-teal-500 text-white
+                          hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]
+                          active:scale-[0.97] group/btn"
+                      >
+                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover/btn:animate-shimmer" />
+                        <span className="relative flex items-center justify-center gap-2">
+                          <Play className="h-3.5 w-3.5" />
+                          Run
+                        </span>
+                      </button>
+                    </div>
                   </div>
-                  <input
-                    type="url"
-                    value={repoUrl}
-                    onChange={(e) => setRepoUrl(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleRun()}
-                    placeholder="https://github.com/username/repository"
-                    className="flex-1 bg-transparent border-none px-2 py-3.5 text-foreground placeholder:text-muted-foreground/40 font-mono text-sm focus:outline-none focus:ring-0"
-                  />
-                  <div className="flex items-center gap-1.5 pr-0.5">
-                    {/* Generate button */}
+
+                  {/* Mobile: stacked buttons below input */}
+                  <div className="flex sm:hidden gap-2 mt-1.5 px-1">
                     <button
                       onClick={handleGenerateOnly}
                       disabled={!repoUrl.trim() || loading}
-                      className="relative overflow-hidden rounded-full px-5 py-3 font-semibold text-sm transition-all duration-300
+                      className="flex-1 relative overflow-hidden rounded-xl py-2.5 font-semibold text-xs transition-all duration-300
                         disabled:opacity-50 disabled:cursor-not-allowed
                         bg-white/[0.06] border border-white/[0.1] text-foreground
-                        hover:bg-white/[0.1] hover:border-white/[0.2]
-                        active:scale-[0.97] group/gen"
+                        active:scale-[0.97]"
                     >
-                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover/gen:animate-shimmer" />
-                      <span className="relative flex items-center justify-center gap-2">
+                      <span className="relative flex items-center justify-center gap-1.5">
                         <Zap className="h-3.5 w-3.5" />
                         Generate
                       </span>
                     </button>
-                    {/* Run button */}
                     <button
                       onClick={handleRun}
                       disabled={!repoUrl.trim() || loading}
-                      className="relative overflow-hidden rounded-full px-5 py-3 font-semibold text-sm transition-all duration-300
+                      className="flex-1 relative overflow-hidden rounded-xl py-2.5 font-semibold text-xs transition-all duration-300
                         disabled:opacity-50 disabled:cursor-not-allowed
                         bg-gradient-to-r from-emerald-500 to-teal-500 text-white
-                        hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]
-                        active:scale-[0.97] group/btn"
+                        active:scale-[0.97]"
                     >
-                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover/btn:animate-shimmer" />
-                      <span className="relative flex items-center justify-center gap-2">
+                      <span className="relative flex items-center justify-center gap-1.5">
                         <Play className="h-3.5 w-3.5" />
                         Run
                       </span>
@@ -1039,10 +1075,10 @@ const LandingPage = () => {
           /* ── scan view: condensed input + live terminal ────── */
           <>
             {/* compact repo badge */}
-            <div className="flex items-center gap-3 mb-5 animate-fade-in-up">
-              <div className="flex items-center gap-2 rounded-full bg-white/[0.04] border border-white/[0.08] px-4 py-2">
-                <Github className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-mono text-foreground truncate max-w-[300px]">{repoUrl}</span>
+            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 mb-4 md:mb-5 animate-fade-in-up px-2">
+              <div className="flex items-center gap-2 rounded-full bg-white/[0.04] border border-white/[0.08] px-3 py-1.5 md:px-4 md:py-2 max-w-full">
+                <Github className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-xs md:text-sm font-mono text-foreground truncate max-w-[200px] sm:max-w-[300px]">{repoUrl}</span>
               </div>
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold px-2 py-1 rounded bg-white/[0.04] border border-white/[0.06]">
                 {selectedOS}
