@@ -14,6 +14,10 @@ Instead of manually writing Dockerfiles, configuring `docker-compose.yml`, and s
 
 This repository contains the **Frontend GUI** for StrixReady. It provides a sleek, single-page, highly interactive user interface that communicates with the StrixReady backend engine.
 
+## 🎨 Interface Preview
+
+![StrixReady UI](./public/screenshot.png)
+
 ## 🚀 How It Works
 
 1. **Input**: The user pastes a GitHub repository URL and selects their host OS (Windows, macOS, or Linux).
