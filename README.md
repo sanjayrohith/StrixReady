@@ -36,7 +36,7 @@ The reality: cloning a repo and getting it to *actually run* often takes hours �
 
 > 💡 Paste a GitHub URL. Pick your OS. Get a production-ready `devcontainer.json` & `docker-compose.yml` — fully configured, zero manual setup.
 
-> **This repository is the Frontend GUI.** The generation engine lives in the [StrixReady CLI →](https://github.com/sanjayrohith/StrixReady-CLI)
+> **This repository is the Frontend GUI.** The generation engine lives in the [StrixReady CLI →](https://github.com/sanjayrohith/strix-cli)
 
 ---
 
@@ -138,7 +138,7 @@ $ strixready generate --url https://github.com/user/my-app --os linux
 
 - **Node.js** 18+
 - **npm**
-- **StrixReady Backend** running at `http://localhost:8000` → [CLI Repo ↗](https://github.com/sanjayrohith/StrixReady-CLI)
+- **StrixReady Backend** running at `http://localhost:8000` → [CLI Repo ↗](https://github.com/sanjayrohith/strix-cli)
 
 ### Installation
 
