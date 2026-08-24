@@ -85,14 +85,32 @@ This repository is a **monorepo** containing both the React frontend and the Pyt
 
 ## 🖥️ CLI
 
-The same generation engine is also available as a terminal tool, scriptable for CI/CD pipelines.
+The same generation engine is also available as a terminal tool (`strix`), scriptable for CI/CD pipelines.
+
+### Install
+
+**Linux and macOS**
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/sanjayrohith/StrixReady/main/scripts/install.sh | sh
+```
+
+**Windows (PowerShell)**
+
+```powershell
+irm https://raw.githubusercontent.com/sanjayrohith/StrixReady/main/scripts/install.ps1 | iex
+```
+
+Either script installs `strix` straight from GitHub — via [pipx](https://pipx.pypa.io/) when available (isolated, no dependency conflicts with other Python tools), falling back to `pip install --user` otherwise. Requires Python 3.10+.
+
+> Prefer to build from source, or contributing? See [Quick Start](#-quick-start) below — `pip install -e .` from a clone works the same way.
+
+### Usage
 
 ```bash
-# Install (from the repo root)
-pip install -e .
-
-# Set your Groq API key
-echo "GROQ_API_KEY=gsk_your_key_here" > .env
+# Set your Groq API key (either works — the CLI checks both)
+export GROQ_API_KEY=gsk_your_key_here
+# or: mkdir -p ~/.strixready && echo "GROQ_API_KEY=gsk_your_key_here" > ~/.strixready/.env
 
 # Run a repo locally
 strix scan https://github.com/owner/repo
@@ -320,13 +338,16 @@ StrixReady/
 │   ├── generator.py               # AI command/Docker generation + local execution
 │   ├── commands.py                # Deterministic fallback command inference
 │   ├── health.py                  # Health checks
-│   └── utils.py                   # Shared colour constants
+│   ├── utils.py                   # Shared colour constants
+│   └── prompts/                   # System prompts, shipped as package data
+│       ├── analyze_repo_prompt.txt        # System prompt used while analysing a repo
+│       ├── generate_artifacts_prompt.txt  # System prompt for local dev commands (Run)
+│       └── generate_docker_prompt.txt     # System prompt for Docker file generation (Generate)
 ├── cli/
 │   └── main.py                    # Typer CLI (scan, gui, doctor)
-├── prompts/
-│   ├── analyze_repo_prompt.txt        # System prompt used while analysing a repo
-│   ├── generate_artifacts_prompt.txt  # System prompt for local dev commands (Run)
-│   └── generate_docker_prompt.txt     # System prompt for Docker file generation (Generate)
+├── scripts/
+│   ├── install.sh                 # One-line installer for Linux/macOS
+│   └── install.ps1                # One-line installer for Windows
 ├── test.py                      ← Manual script to test AI generation against a repo URL
 ├── pyproject.toml               ← `strix` CLI package definition (installs cli/ + backend/)
 ├── requirements.txt              # Pinned backend dependencies

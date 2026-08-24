@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "CLI tool that scans repos and spins up environments using AI-generated configs."
 authors = [{name = "Sanjay Rohith"}]
 license = "MIT"
+requires-python = ">=3.10"
 dependencies = [
     "typer",
     "rich",
@@ -19,8 +20,15 @@ dependencies = [
     "python-dotenv"
 ]
 
+[project.urls]
+Homepage = "https://github.com/sanjayrohith/StrixReady"
+Repository = "https://github.com/sanjayrohith/StrixReady"
+
 [project.scripts]
 strix = "cli.main:main"
 
 [tool.setuptools.packages.find]
 include = ["cli*", "backend*"]
+
+[tool.setuptools.package-data]
+backend = ["prompts/*.txt"]
