@@ -267,7 +267,7 @@ cd StrixReady
 
 ```sh
 pip install -e .
-echo "GROQ_API_KEY=gsk_your_key_here" > .env
+cp .env.example .env   # then fill in your GROQ_API_KEY
 strix gui
 # → http://localhost:8000
 ```
@@ -295,34 +295,44 @@ npm run preview
 
 ```
 StrixReady/
-├── frontend/                ← React + Vite + TypeScript UI
-│   ├── public/
-│   │   └── screenshot.png   ← UI preview image
+├── frontend/                    ← React + Vite + TypeScript UI
+│   ├── public/                   # Static assets (favicon, screenshot, ...)
 │   ├── src/
-│   │   ├── components/      ← Reusable UI components (shadcn/ui)
-│   │   ├── pages/           ← Route-level page components
-│   │   ├── hooks/           ← Custom React hooks
-│   │   ├── lib/             ← Utility functions & helpers
-│   │   └── main.tsx         ← Application entry point
+│   │   ├── components/           # Reusable UI components (shadcn/ui) + app components
+│   │   ├── pages/                # Route-level page components
+│   │   ├── hooks/                # Custom React hooks
+│   │   ├── lib/                  # Utility functions & backend API client
+│   │   ├── test/                 # Vitest setup + example test
+│   │   └── main.tsx              # Application entry point
 │   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json         # npm is the package manager for this app
+│   ├── components.json           # shadcn/ui config
 │   ├── tailwind.config.ts
-│   ├── tsconfig.json
-│   └── vite.config.ts
-├── backend/                 ← FastAPI app (port 8000)
-│   ├── main.py               # API routes (scan, scan/stream, run, health)
-│   ├── analyzer.py           # Clone repo + detect stack (with on_log callbacks)
-│   ├── generator.py          # AI command/Docker generation + local execution
-│   ├── commands.py           # Deterministic fallback command inference
-│   ├── health.py              # Health checks
-│   └── utils.py               # Shared colour constants
+│   ├── postcss.config.js
+│   ├── eslint.config.js
+│   ├── tsconfig.json / tsconfig.app.json / tsconfig.node.json
+│   ├── vite.config.ts
+│   └── vitest.config.ts
+├── backend/                     ← FastAPI app (port 8000)
+│   ├── main.py                    # API routes (scan, scan/stream, run, health)
+│   ├── analyzer.py                # Clone repo + detect stack (with on_log callbacks)
+│   ├── generator.py               # AI command/Docker generation + local execution
+│   ├── commands.py                # Deterministic fallback command inference
+│   ├── health.py                  # Health checks
+│   └── utils.py                   # Shared colour constants
 ├── cli/
-│   └── main.py               # Typer CLI (scan, gui, doctor)
+│   └── main.py                    # Typer CLI (scan, gui, doctor)
 ├── prompts/
+│   ├── analyze_repo_prompt.txt        # System prompt used while analysing a repo
 │   ├── generate_artifacts_prompt.txt  # System prompt for local dev commands (Run)
 │   └── generate_docker_prompt.txt     # System prompt for Docker file generation (Generate)
-├── pyproject.toml
-├── requirements.txt
-└── .env                      ← GROQ_API_KEY (not committed)
+├── test.py                      ← Manual script to test AI generation against a repo URL
+├── pyproject.toml               ← `strix` CLI package definition (installs cli/ + backend/)
+├── requirements.txt              # Pinned backend dependencies
+├── .env.example                  # Template for GROQ_API_KEY
+├── .env                          ← your local GROQ_API_KEY (not committed)
+└── LICENSE
 ```
 
 ---
