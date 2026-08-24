@@ -19,10 +19,12 @@
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![shadcn/ui](https://img.shields.io/badge/shadcn/ui-000000?style=for-the-badge&logo=shadcnui&logoColor=white)](https://ui.shadcn.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Python](https://img.shields.io/badge/Python_3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 
 <br/>
 
-**[🚀 Quick Start](#-quick-start) · [⚙️ How It Works](#%EF%B8%8F-how-it-works) · [🖥️ CLI Companion](#%EF%B8%8F-cli-companion) · [💻 Tech Stack](#-tech-stack) · [🔮 Roadmap](#-roadmap)**
+**[🚀 Quick Start](#-quick-start) · [⚙️ How It Works](#%EF%B8%8F-how-it-works) · [🖥️ CLI](#%EF%B8%8F-cli) · [🔌 API](#-api-reference) · [💻 Tech Stack](#-tech-stack) · [🔮 Roadmap](#-roadmap)**
 
 </div>
 
@@ -34,19 +36,17 @@
 
 The reality: cloning a repo and getting it to *actually run* often takes hours — writing Dockerfiles from scratch, hunting down missing env vars, wiring up databases, and wrestling with DevContainer configs. **StrixReady automates all of that.**
 
-> 💡 Paste a GitHub URL. Pick your OS. Get a production-ready `devcontainer.json` & `docker-compose.yml` — fully configured, zero manual setup.
+> 💡 Paste a GitHub URL. Pick your OS. Get a running dev server locally, or production-ready Docker config files — fully configured, zero manual setup.
 
-> **This repository is the Frontend GUI.** The generation engine lives in the [StrixReady CLI →](https://github.com/sanjayrohith/strix-cli)
+This repository is a **monorepo** containing both the React frontend and the Python (FastAPI + Typer CLI) backend that powers it.
 
 ---
 
 ## 🎬 Gallery
 
 <div align="center">
-  <img src="./public/screenshot.png" alt="StrixReady UI Preview" width="90%"/>
+  <img src="./frontend/public/screenshot.png" alt="StrixReady UI Preview" width="90%"/>
 </div>
-
-> Replace the screenshot above with a GIF recording of the UI in action for maximum impact. Tools: [LICEcap](https://www.cockos.com/licecap/) (Win/Mac) · [Peek](https://github.com/phw/peek) (Linux)
 
 ---
 
@@ -56,65 +56,176 @@ The reality: cloning a repo and getting it to *actually run* often takes hours �
   GitHub URL + OS Selection
          │
          ▼
-  ┌─────────────┐    POST /generate    ┌──────────────────────────────┐
-  │  StrixReady │ ──────────────────▶  │        Backend  :8000        │
-  │   Frontend  │                      │                              │
-  └─────────────┘                      │  1. Clone repository         │
-                                       │  2. Scan package.json        │
-                                       │     + lock files + CI config │
-                                       │  3. Detect full stack        │
-                                       │  4. Generate config files    │
-                                       └──────────────┬───────────────┘
-                                                      │
-                                       ┌──────────────┴───────────────┐
-                                       ▼                              ▼
-                               devcontainer.json           docker-compose.yml
-                                       └──────────────┬───────────────┘
-                                                      │
-                                          ✅ Open in VS Code
+  ┌─────────────┐    POST /scan          ┌──────────────────────────────┐
+  │  StrixReady │ ──────────────────▶    │   Backend API  :8000         │
+  │   Frontend  │   GET /scan/stream      │                              │
+  │    :8080    │ ◀────────────────────  │  1. Clone repository         │
+  └─────────────┘   SSE live progress    │  2. Scan package.json /      │
+                                          │     requirements.txt / README│
+                                          │  3. Detect full stack (AI)   │
+                                          │  4. Generate commands or     │
+                                          │     Docker config files      │
+                                          └──────────────┬───────────────┘
+                                                         │
+                                          ┌──────────────┴───────────────┐
+                                          ▼                              ▼
+                                 Local dev server                Dockerfile +
+                                 on localhost                    docker-compose.yml
 ```
 
 | # | Step | What happens |
 |---|------|-------------|
 | **01** | **Input** | Paste any public GitHub URL · Select host OS (Windows / macOS / Linux) |
-| **02** | **Dispatch** | Frontend sends `POST {"url":"...","os":"..."}` to `localhost:8000` |
+| **02** | **Dispatch** | Frontend calls the backend API at `localhost:8000` |
 | **03** | **Analysis** | Backend clones repo · scans manifests, lock files, CI configs |
-| **04** | **Generation** | Assembles `devcontainer.json` + `docker-compose.yml` with all services wired |
-| **05** | **Ready** | Open in VS Code → DevContainer builds → start coding immediately |
+| **04** | **Generation** | AI (Groq) returns install/dev commands, or full Docker config |
+| **05** | **Ready** | Run instantly on localhost, or `docker compose up` |
 
 ---
 
-## 🖥️ CLI Companion
+## 🖥️ CLI
 
-> The same powerful generation engine — available directly in your terminal and scriptable for CI/CD pipelines.
-
-<div align="center">
-
-### 🔗 [StrixReady CLI →](https://github.com/sanjayrohith/strix-cli)
-
-![CLI Stars](https://img.shields.io/github/stars/sanjayrohith/strix-cli?style=flat-square&logo=github&color=00e5a0&labelColor=0d1117)
-![CLI Last Commit](https://img.shields.io/github/last-commit/sanjayrohith/strix-cli?style=flat-square&logo=github&color=7c5cfc&labelColor=0d1117)
-
-</div>
+The same generation engine is also available as a terminal tool, scriptable for CI/CD pipelines.
 
 ```bash
-$ strixready generate --url https://github.com/user/my-app --os linux
+# Install (from the repo root)
+pip install -e .
 
-  → Cloning repository...
-  → Detected stack: Next.js · PostgreSQL · Redis
-  → Generating devcontainer.json...
-  → Generating docker-compose.yml...
+# Set your Groq API key
+echo "GROQ_API_KEY=gsk_your_key_here" > .env
 
-  ✓ Environment ready in 4.2s
+# Run a repo locally
+strix scan https://github.com/owner/repo
+
+# Start the backend API (React frontend calls this)
+strix gui
+
+# Health-check running services
+strix doctor
 ```
 
-| Feature | Frontend GUI | CLI |
-|---------|:---:|:---:|
-| Interactive visual UI | ✅ | — |
-| Terminal-native workflow | — | ✅ |
-| CI/CD scriptable | — | ✅ |
-| Config preview & editor | ✅ | Planned |
-| Same generation engine | ✅ | ✅ |
+| Command | Description |
+|---------|-------------|
+| `strix scan <url>` | Clone, detect stack, install deps, run dev server locally |
+| `strix scan <url> --os macos` | Specify target OS |
+| `strix gui` | Start the backend API (port 8000) for the React frontend |
+| `strix doctor` | Health-check running services |
+
+---
+
+## 🔌 API Reference
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Health check |
+| `POST` | `/scan` | **Generate** — Clone + analyse + AI generates Docker config files |
+| `GET` | `/scan/stream` | **Run** — Clone + analyse + execute locally with SSE live progress |
+| `POST` | `/scan/analyze` | Clone + analyse only (preview commands, no execution) |
+| `POST` | `/run` | Execute commands in a given local directory |
+
+<details>
+<summary><strong>POST /scan</strong> — Docker file generation (Generate button)</summary>
+
+**Request:**
+```json
+{ "url": "https://github.com/owner/repo", "os": "linux" }
+```
+
+**Response:**
+```json
+{
+  "profile": {
+    "name": "repo",
+    "languages": ["TypeScript", "JavaScript"],
+    "frameworks": ["Vite", "React"],
+    "local_path": "/tmp/strix_.../repo"
+  },
+  "artifacts": {
+    "Dockerfile": "FROM node:20-alpine\n...",
+    "docker-compose.yml": "services:\n  repo:\n...",
+    ".dockerignore": "node_modules\n.git\n...",
+    ".env.example": "# API keys\nVITE_API_URL=...",
+    "notes": "Single-stage Vite build. Run: docker compose up"
+  },
+  "written_files": [
+    "/tmp/strix_.../repo/Dockerfile",
+    "/tmp/strix_.../repo/docker-compose.yml",
+    "/tmp/strix_.../repo/.dockerignore",
+    "/tmp/strix_.../repo/.env.example"
+  ],
+  "local_path": "/tmp/strix_.../repo"
+}
+```
+</details>
+
+<details>
+<summary><strong>GET /scan/stream</strong> — Local dev server with live progress (Run button)</summary>
+
+SSE stream — each event is a JSON object:
+
+```
+GET /scan/stream?url=https://github.com/owner/repo&os=linux
+```
+
+**Events:**
+```
+data: {"step": "clone",       "message": "Cloning repository...",           "data": null}
+data: {"step": "analyze",     "message": "Analysis complete",               "data": {...}}
+data: {"step": "ai",          "message": "AI returned commands",            "data": {...}}
+data: {"step": "commands",    "message": "Setup plan ready",                "data": {"install_command": "npm i", "dev_command": "npm run dev", ...}}
+data: {"step": "install",     "message": "Installing dependencies: npm i",  "data": null}
+data: {"step": "install",     "message": "Dependencies installed.",         "data": null}
+data: {"step": "dev",         "message": "Starting dev server: npm run dev","data": null}
+data: {"step": "done",        "message": "App running at http://localhost:8081", "data": {"running": true, "port": 8081, "pid": 12345}}
+data: {"step": "end",         "message": "Stream complete",                 "data": null}
+```
+
+Steps: `clone` → `analyze` → `ai` → `commands` → `pre_install` → `install` → `post_install` → `dev` → `done` → `end`
+</details>
+
+<details>
+<summary><strong>POST /scan/analyze</strong> — Preview only (no execution)</summary>
+
+**Request:**
+```json
+{ "url": "https://github.com/owner/repo", "os": "linux" }
+```
+
+**Response:**
+```json
+{
+  "profile": { "name": "repo", "languages": ["Python"], "frameworks": ["FastAPI"] },
+  "commands": {
+    "install_command": "pip install -r requirements.txt",
+    "dev_command": "uvicorn main:app --reload",
+    "port": 8000,
+    "env_vars": { "DATABASE_URL": "" },
+    "env_notes": "Set DATABASE_URL to your Postgres connection string."
+  }
+}
+```
+</details>
+
+<details>
+<summary><strong>POST /run</strong> — Execute commands in a local directory</summary>
+
+**Request:**
+```json
+{
+  "local_path": "/tmp/strix_.../repo",
+  "commands": {
+    "install_command": "npm install",
+    "dev_command": "npm run dev",
+    "port": 5173
+  }
+}
+```
+
+**Response:**
+```json
+{ "result": { "running": true, "port": 5173, "pid": 12345, "error": null } }
+```
+</details>
 
 ---
 
@@ -122,13 +233,17 @@ $ strixready generate --url https://github.com/user/my-app --os linux
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
-| Framework | [React 18](https://react.dev/) + [Vite](https://vitejs.dev/) | UI rendering & fast builds |
-| Language | [TypeScript](https://www.typescriptlang.org/) | Type-safe development |
+| Frontend framework | [React 18](https://react.dev/) + [Vite](https://vitejs.dev/) | UI rendering & fast builds |
+| Language (frontend) | [TypeScript](https://www.typescriptlang.org/) | Type-safe development |
 | Styling | [Tailwind CSS](https://tailwindcss.com/) | Utility-first styling |
 | Components | [shadcn/ui](https://ui.shadcn.com/) + [Radix UI](https://www.radix-ui.com/) | Accessible, composable UI |
 | Icons | [Lucide React](https://lucide.dev/) | Consistent icon set |
 | Routing | React Router DOM | Client-side navigation |
 | State & Fetching | React Query + Fetch API | Server state management |
+| Backend framework | [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/) | REST + SSE API server |
+| CLI | [Typer](https://typer.tiangolo.com/) + [Rich](https://rich.readthedocs.io/) | Terminal interface |
+| AI | [Groq](https://console.groq.com/) | Stack detection & command/Docker generation |
+| Language (backend) | Python 3.10+ | Analysis engine & API |
 
 ---
 
@@ -136,28 +251,40 @@ $ strixready generate --url https://github.com/user/my-app --os linux
 
 ### Prerequisites
 
-- **Node.js** 18+
-- **npm**
-- **StrixReady Backend** running at `http://localhost:8000` → [CLI Repo ↗](https://github.com/sanjayrohith/strix-cli)
+- **Node.js** 18+ and **npm**
+- **Python** 3.10+
+- **Git**
+- A [Groq API key](https://console.groq.com) (free)
 
-### Installation
+### 1. Clone the repository
 
 ```sh
-# 1. Clone the repository
 git clone https://github.com/sanjayrohith/StrixReady.git
 cd StrixReady
+```
 
-# 2. Install dependencies
+### 2. Start the backend API
+
+```sh
+pip install -e .
+echo "GROQ_API_KEY=gsk_your_key_here" > .env
+strix gui
+# → http://localhost:8000
+```
+
+### 3. Start the frontend
+
+```sh
+cd frontend
 npm install
-
-# 3. Start the dev server
 npm run dev
 # → http://localhost:8080 (or 8081 if occupied)
 ```
 
-### Production Build
+### Production Build (frontend)
 
 ```sh
+cd frontend
 npm run build
 npm run preview
 ```
@@ -168,18 +295,34 @@ npm run preview
 
 ```
 StrixReady/
-├── public/
-│   └── screenshot.png       ← UI preview image
-├── src/
-│   ├── components/          ← Reusable UI components (shadcn/ui)
-│   ├── pages/               ← Route-level page components
-│   ├── hooks/               ← Custom React hooks
-│   ├── lib/                 ← Utility functions & helpers
-│   └── main.tsx             ← Application entry point
-├── index.html
-├── tailwind.config.ts
-├── tsconfig.json
-└── vite.config.ts
+├── frontend/                ← React + Vite + TypeScript UI
+│   ├── public/
+│   │   └── screenshot.png   ← UI preview image
+│   ├── src/
+│   │   ├── components/      ← Reusable UI components (shadcn/ui)
+│   │   ├── pages/           ← Route-level page components
+│   │   ├── hooks/           ← Custom React hooks
+│   │   ├── lib/             ← Utility functions & helpers
+│   │   └── main.tsx         ← Application entry point
+│   ├── index.html
+│   ├── tailwind.config.ts
+│   ├── tsconfig.json
+│   └── vite.config.ts
+├── backend/                 ← FastAPI app (port 8000)
+│   ├── main.py               # API routes (scan, scan/stream, run, health)
+│   ├── analyzer.py           # Clone repo + detect stack (with on_log callbacks)
+│   ├── generator.py          # AI command/Docker generation + local execution
+│   ├── commands.py           # Deterministic fallback command inference
+│   ├── health.py              # Health checks
+│   └── utils.py               # Shared colour constants
+├── cli/
+│   └── main.py               # Typer CLI (scan, gui, doctor)
+├── prompts/
+│   ├── generate_artifacts_prompt.txt  # System prompt for local dev commands (Run)
+│   └── generate_docker_prompt.txt     # System prompt for Docker file generation (Generate)
+├── pyproject.toml
+├── requirements.txt
+└── .env                      ← GROQ_API_KEY (not committed)
 ```
 
 ---
@@ -195,3 +338,6 @@ StrixReady/
 
 ---
 
+## License
+
+MIT
