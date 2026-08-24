@@ -55,17 +55,20 @@ interface LogEntry {
   data?: any;
 }
 
-/* ── step → icon & colour mapping ──────────────────────────────── */
+/* ── step → icon & colour mapping (matches the backend's on_log step names) ── */
 const STEP_STYLE: Record<string, { icon: React.ReactNode; color: string }> = {
-  clone:    { icon: <Download className="h-3.5 w-3.5" />, color: "text-sky-400" },
-  detect:   { icon: <Cpu className="h-3.5 w-3.5" />,      color: "text-violet-400" },
-  generate: { icon: <FileJson className="h-3.5 w-3.5" />,  color: "text-amber-400" },
-  compose:  { icon: <GitBranch className="h-3.5 w-3.5" />, color: "text-rose-400" },
-  build:    { icon: <Terminal className="h-3.5 w-3.5" />,  color: "text-teal-400" },
-  run:      { icon: <Sparkles className="h-3.5 w-3.5" />,  color: "text-emerald-400" },
-  done:     { icon: <CheckCircle2 className="h-3.5 w-3.5" />, color: "text-emerald-400" },
-  error:    { icon: <AlertCircle className="h-3.5 w-3.5" />,  color: "text-red-400" },
-  end:      { icon: <Circle className="h-3.5 w-3.5" />,       color: "text-muted-foreground" },
+  clone:        { icon: <Download className="h-3.5 w-3.5" />,    color: "text-sky-400" },
+  analyze:      { icon: <Cpu className="h-3.5 w-3.5" />,          color: "text-violet-400" },
+  ai:           { icon: <Sparkles className="h-3.5 w-3.5" />,     color: "text-amber-400" },
+  commands:     { icon: <Terminal className="h-3.5 w-3.5" />,     color: "text-teal-400" },
+  pre_install:  { icon: <Terminal className="h-3.5 w-3.5" />,     color: "text-teal-400" },
+  install:      { icon: <Terminal className="h-3.5 w-3.5" />,     color: "text-teal-400" },
+  post_install: { icon: <Terminal className="h-3.5 w-3.5" />,     color: "text-teal-400" },
+  dev:          { icon: <Play className="h-3.5 w-3.5" />,         color: "text-emerald-400" },
+  write:        { icon: <FileJson className="h-3.5 w-3.5" />,     color: "text-rose-400" },
+  done:         { icon: <CheckCircle2 className="h-3.5 w-3.5" />, color: "text-emerald-400" },
+  error:        { icon: <AlertCircle className="h-3.5 w-3.5" />,  color: "text-red-400" },
+  end:          { icon: <Circle className="h-3.5 w-3.5" />,       color: "text-muted-foreground" },
 };
 const DEFAULT_STEP_STYLE = { icon: <Circle className="h-3.5 w-3.5" />, color: "text-muted-foreground" };
 
@@ -75,11 +78,13 @@ const LogPanel = ({
   status,
   onReset,
   doneData,
+  mode,
 }: {
   logs: LogEntry[];
   status: ScanStatus;
   onReset: () => void;
   doneData: any;
+  mode: "run" | "generate" | null;
 }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -155,7 +160,21 @@ const LogPanel = ({
         </div>
 
         {/* done banner */}
-        {status === "done" && doneData && (
+        {status === "done" && doneData && mode === "generate" && (
+          <div className="border-t border-white/[0.06] bg-emerald-500/[0.05] px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-emerald-400 text-xs font-medium">
+              <CheckCircle2 className="h-4 w-4" />
+              Config files generated
+              {Array.isArray(doneData.written_files) && (
+                <span className="text-muted-foreground">
+                  {doneData.written_files.length} file{doneData.written_files.length === 1 ? "" : "s"} written
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {status === "done" && doneData && mode === "run" && (
           <div className="border-t border-white/[0.06] bg-emerald-500/[0.05] px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2 text-emerald-400 text-xs font-medium">
               <CheckCircle2 className="h-4 w-4" />
@@ -390,6 +409,7 @@ const LandingPage = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [status, setStatus] = useState<ScanStatus>("idle");
   const [doneData, setDoneData] = useState<any>(null);
+  const [mode, setMode] = useState<"run" | "generate" | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
   const loading = status === "running";
@@ -427,55 +447,24 @@ const LandingPage = () => {
     setLogs([]);
     setStatus("idle");
     setDoneData(null);
+    setMode(null);
     setRepoUrl("");
   }, []);
 
-  const handleGenerateOnly = async () => {
-    if (!repoUrl.trim() || loading) return;
-    setStatus("running");
-    setLogs([{ step: "generate", message: "Sending repo for config generation…" }]);
-    setDoneData(null);
-
-    try {
-      const response = await fetch(`${API_BASE}/scan`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: repoUrl.trim(), os: selectedOS }),
-      });
-
-      if (!response.ok) throw new Error("Failed to generate config");
-
-      const result = await response.json();
-      setLogs((prev) => [
-        ...prev,
-        { step: "done", message: "Config files generated successfully!", data: result },
-      ]);
-      setStatus("done");
-      setDoneData(result);
-      toast.success("Config generated!", {
-        description: "devcontainer.json and docker-compose.yml are ready.",
-      });
-    } catch {
-      setLogs((prev) => [
-        ...prev,
-        { step: "error", message: "Could not connect to backend. Is it running?" },
-      ]);
-      setStatus("error");
-      toast.error("Generation failed", {
-        description: "Could not connect to the backend.",
-      });
-    }
-  };
-
-  const handleRun = () => {
+  /* ── shared SSE wiring for both Run and Generate ─────────────── */
+  const startStream = (
+    streamPath: "/scan/stream" | "/scan/stream/generate",
+    streamMode: "run" | "generate",
+    successToast: { title: string; description: (msg: string) => string },
+  ) => {
     if (!repoUrl.trim() || loading) return;
 
-    // Reset previous state
     setLogs([]);
     setDoneData(null);
+    setMode(streamMode);
     setStatus("running");
 
-    const url = `${API_BASE}/scan/stream?url=${encodeURIComponent(
+    const url = `${API_BASE}${streamPath}?url=${encodeURIComponent(
       repoUrl.trim(),
     )}&os=${selectedOS}`;
 
@@ -490,13 +479,13 @@ const LandingPage = () => {
         if (data.step === "done") {
           setStatus("done");
           setDoneData(data.data ?? null);
-          toast.success("Environment ready!", {
-            description: data.message,
+          toast.success(successToast.title, {
+            description: successToast.description(data.message),
           });
         }
         if (data.step === "error") {
           setStatus("error");
-          toast.error("Scan failed", {
+          toast.error(streamMode === "run" ? "Scan failed" : "Generation failed", {
             description: data.message,
           });
         }
@@ -518,6 +507,20 @@ const LandingPage = () => {
       es.close();
       eventSourceRef.current = null;
     };
+  };
+
+  const handleGenerateOnly = () => {
+    startStream("/scan/stream/generate", "generate", {
+      title: "Config generated!",
+      description: () => "devcontainer.json and docker-compose.yml are ready.",
+    });
+  };
+
+  const handleRun = () => {
+    startStream("/scan/stream", "run", {
+      title: "Environment ready!",
+      description: (msg) => msg,
+    });
   };
 
   const themeClass =
@@ -1086,7 +1089,7 @@ const LandingPage = () => {
             </div>
 
             {/* live log terminal */}
-            <LogPanel logs={logs} status={status} onReset={resetScan} doneData={doneData} />
+            <LogPanel logs={logs} status={status} onReset={resetScan} doneData={doneData} mode={mode} />
           </>
         )}
       </main>

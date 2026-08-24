@@ -136,13 +136,36 @@ strix doctor
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/health` | Health check |
-| `POST` | `/scan` | **Generate** — Clone + analyse + AI generates Docker config files |
+| `GET` | `/scan/stream/generate` | **Generate** — Clone + analyse + AI generates Docker config files, with SSE live progress |
+| `POST` | `/scan` | Same as above, but blocking — single response once everything is done |
 | `GET` | `/scan/stream` | **Run** — Clone + analyse + execute locally with SSE live progress |
 | `POST` | `/scan/analyze` | Clone + analyse only (preview commands, no execution) |
 | `POST` | `/run` | Execute commands in a given local directory |
 
 <details>
-<summary><strong>POST /scan</strong> — Docker file generation (Generate button)</summary>
+<summary><strong>GET /scan/stream/generate</strong> — Docker file generation with live progress (Generate button)</summary>
+
+SSE stream — each event is a JSON object:
+
+```
+GET /scan/stream/generate?url=https://github.com/owner/repo&os=linux
+```
+
+**Events:**
+```
+data: {"step": "clone",   "message": "Cloning repository...",              "data": null}
+data: {"step": "analyze", "message": "Analysis complete",                  "data": {...}}
+data: {"step": "ai",      "message": "AI returned Docker config...",       "data": {...}}
+data: {"step": "write",   "message": "  wrote /tmp/.../Dockerfile",        "data": null}
+data: {"step": "done",    "message": "Config files generated successfully!", "data": {"profile": {...}, "artifacts": {...}, "written_files": [...], "local_path": "..."}}
+data: {"step": "end",     "message": "Stream complete",                    "data": null}
+```
+
+Steps: `clone` → `analyze` → `ai` → `write` → `done` → `end`. The `done` event's `data` is the same shape `POST /scan` returns in its response body.
+</details>
+
+<details>
+<summary><strong>POST /scan</strong> — Docker file generation, blocking (no live progress)</summary>
 
 **Request:**
 ```json
@@ -360,7 +383,7 @@ StrixReady/
 
 ## 🔮 Roadmap
 
-- [ ] **Real-time Progress Streaming** — Replace the static spinner with live SSE/WebSocket log streaming from the backend during clone and analysis.
+- [x] **Real-time Progress Streaming** — Both the Run and Generate buttons stream live progress from the backend via SSE (`/scan/stream` and `/scan/stream/generate`) instead of a static spinner.
 - [ ] **Interactive Config Editor** — Preview and tweak generated `devcontainer.json` and `docker-compose.yml` (ports, extensions, env vars) directly in the browser before downloading.
 - [ ] **Environment History** — Persist recently generated environments locally for quick re-access and comparison.
 - [ ] **Dark / Light Mode Toggle** — Accessible light mode alongside the current dark glassmorphism theme.
