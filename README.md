@@ -1,8 +1,11 @@
+<a id="top"></a>
 <div align="center">
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:00e5a0,50:0096ff,100:7c5cfc&height=200&section=header&text=StrixReady&fontSize=72&fontColor=ffffff&fontAlignY=38&desc=Dev+Environments+in+Seconds&descAlignY=58&descSize=18&animation=fadeIn" width="100%"/>
 
-<br/>
+<p>
+  <b>Paste a GitHub URL. Pick your OS. Get a running dev environment — zero manual setup.</b>
+</p>
 
 <!-- Live repo stats -->
 ![Stars](https://img.shields.io/github/stars/sanjayrohith/StrixReady?style=for-the-badge&logo=github&color=00e5a0&labelColor=0d1117)
@@ -10,8 +13,6 @@
 ![Last Commit](https://img.shields.io/github/last-commit/sanjayrohith/StrixReady?style=for-the-badge&logo=github&color=7c5cfc&labelColor=0d1117)
 ![Issues](https://img.shields.io/github/issues/sanjayrohith/StrixReady?style=for-the-badge&logo=github&color=ff6b6b&labelColor=0d1117)
 ![License](https://img.shields.io/github/license/sanjayrohith/StrixReady?style=for-the-badge&color=22c55e&labelColor=0d1117)
-
-<br/>
 
 <!-- Tech stack -->
 [![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
@@ -22,11 +23,34 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Python](https://img.shields.io/badge/Python_3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 
-<br/>
-
-**[🚀 Quick Start](#-quick-start) · [⚙️ How It Works](#%EF%B8%8F-how-it-works) · [🖥️ CLI](#%EF%B8%8F-cli) · [🔌 API](#-api-reference) · [💻 Tech Stack](#-tech-stack) · [🔮 Roadmap](#-roadmap)**
+<p>
+  <a href="#-quick-start"><b>Quick Start</b></a> ·
+  <a href="#%EF%B8%8F-how-it-works"><b>How It Works</b></a> ·
+  <a href="#%EF%B8%8F-cli"><b>CLI</b></a> ·
+  <a href="#-api-reference"><b>API</b></a> ·
+  <a href="#-tech-stack"><b>Tech Stack</b></a> ·
+  <a href="#-roadmap"><b>Roadmap</b></a>
+</p>
 
 </div>
+
+<details>
+<summary><b>📑 Table of Contents</b></summary>
+<br/>
+
+- [Overview](#-overview)
+- [Gallery](#-gallery)
+- [How It Works](#%EF%B8%8F-how-it-works)
+- [CLI](#%EF%B8%8F-cli)
+- [API Reference](#-api-reference)
+- [Tech Stack](#-tech-stack)
+- [Quick Start](#-quick-start)
+- [Project Structure](#-project-structure)
+- [Roadmap](#-roadmap)
+- [Contributing](#-contributing)
+- [License](#license)
+
+</details>
 
 ---
 
@@ -36,9 +60,9 @@
 
 The reality: cloning a repo and getting it to *actually run* often takes hours — writing Dockerfiles from scratch, hunting down missing env vars, wiring up databases, and wrestling with DevContainer configs. **StrixReady automates all of that.**
 
-> 💡 Paste a GitHub URL. Pick your OS. Get a running dev server locally, or production-ready Docker config files — fully configured, zero manual setup.
+> 💡 One request, two outcomes: **Run** it instantly on `localhost`, or **Generate** a production-ready `Dockerfile` + `docker-compose.yml` — both driven by AI stack detection, both streamed live so you're never staring at a blank spinner.
 
-This repository is a **monorepo** containing both the React frontend and the Python (FastAPI + Typer CLI) backend that powers it.
+This repository is a **monorepo** containing both the React frontend and the Python (FastAPI + Typer CLI) backend that powers it — see [How It Works](#%EF%B8%8F-how-it-works) below.
 
 ---
 
@@ -52,25 +76,31 @@ This repository is a **monorepo** containing both the React frontend and the Pyt
 
 ## ⚙️ How It Works
 
-```
-  GitHub URL + OS Selection
-         │
-         ▼
-  ┌─────────────┐    POST /scan          ┌──────────────────────────────┐
-  │  StrixReady │ ──────────────────▶    │   Backend API  :8000         │
-  │   Frontend  │   GET /scan/stream      │                              │
-  │    :8080    │ ◀────────────────────  │  1. Clone repository         │
-  └─────────────┘   SSE live progress    │  2. Scan package.json /      │
-                                          │     requirements.txt / README│
-                                          │  3. Detect full stack (AI)   │
-                                          │  4. Generate commands or     │
-                                          │     Docker config files      │
-                                          └──────────────┬───────────────┘
-                                                         │
-                                          ┌──────────────┴───────────────┐
-                                          ▼                              ▼
-                                 Local dev server                Dockerfile +
-                                 on localhost                    docker-compose.yml
+```mermaid
+flowchart LR
+    A["Paste GitHub URL<br/>Select OS"] -->|"SSE: /scan/stream<br/>or /scan/stream/generate"| B["Frontend :8080"]
+    B --> C["Backend API :8000"]
+
+    subgraph Pipeline["Backend pipeline"]
+        direction TB
+        C1["1 · Clone repository"] --> C2["2 · Scan manifests,<br/>lockfiles & CI config"]
+        C2 --> C3["3 · AI detects stack"]
+        C3 --> C4{"Run or<br/>Generate?"}
+    end
+
+    C --> C1
+    C4 -->|Run| D(["Dev server<br/>on localhost"])
+    C4 -->|Generate| E(["Dockerfile +<br/>docker-compose.yml"])
+    D -.->|live progress| B
+    E -.->|live progress| B
+
+    classDef client fill:#0d1117,stroke:#00e5a0,color:#fff;
+    classDef server fill:#0d1117,stroke:#0096ff,color:#fff;
+    classDef result fill:#0d1117,stroke:#7c5cfc,color:#fff;
+    class A,B client;
+    class C,C1,C2,C3,C4 server;
+    class D,E result;
+    style Pipeline fill:#161b22,stroke:#30363d,color:#c9d1d9
 ```
 
 | # | Step | What happens |
@@ -392,6 +422,27 @@ StrixReady/
 
 ---
 
+## 🤝 Contributing
+
+Issues and pull requests are welcome. Before opening a PR:
+
+1. Fork the repo and create a branch off `main`.
+2. For frontend changes: `cd frontend && npm install && npm run lint && npm run test`.
+3. For backend changes: `pip install -e . && strix doctor`.
+4. Keep PRs focused — one change per PR is easier to review than five.
+
+---
+
 ## License
 
-MIT
+Released under the [MIT License](./LICENSE).
+
+<div align="center">
+
+<br/>
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:7c5cfc,50:0096ff,100:00e5a0&height=100&section=footer" width="100%"/>
+
+<sub>Built by <a href="https://github.com/sanjayrohith">Sanjay Rohith</a> · <a href="#top">Back to top ↑</a></sub>
+
+</div>
