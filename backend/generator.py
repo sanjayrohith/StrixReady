@@ -16,7 +16,7 @@ import shlex
 from pathlib import Path
 from typing import Dict, Any, Optional, Callable
 
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 from groq import Groq
 
 from backend.utils import colors
@@ -24,13 +24,21 @@ from backend.utils import colors
 # Type alias for the optional log callback
 LogCallback = Optional[Callable[[str, str, Optional[dict]], None]]
 
-# Load .env from project root
-load_dotenv(Path(__file__).parent.parent / ".env")
+# ---------------------------------------------------------------------------
+# Load GROQ_API_KEY / other config
+#
+# Works both from a source checkout (project-root .env) and from a pip/pipx
+# install (no project root to speak of), by checking, in order: variables
+# already exported in the shell, a .env in the current directory (or any
+# parent of it), then a global ~/.strixready/.env.
+# ---------------------------------------------------------------------------
+load_dotenv(find_dotenv(usecwd=True))
+load_dotenv(Path.home() / ".strixready" / ".env", override=False)
 
 # ---------------------------------------------------------------------------
-# Load system prompts
+# Load system prompts (shipped as package data alongside this module)
 # ---------------------------------------------------------------------------
-_PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "generate_artifacts_prompt.txt"
+_PROMPT_PATH = Path(__file__).parent / "prompts" / "generate_artifacts_prompt.txt"
 try:
     SYSTEM_PROMPT = _PROMPT_PATH.read_text()
 except FileNotFoundError:
@@ -40,7 +48,7 @@ except FileNotFoundError:
         "env_vars, env_notes, pre_install, post_install."
     )
 
-_DOCKER_PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "generate_docker_prompt.txt"
+_DOCKER_PROMPT_PATH = Path(__file__).parent / "prompts" / "generate_docker_prompt.txt"
 try:
     DOCKER_SYSTEM_PROMPT = _DOCKER_PROMPT_PATH.read_text()
 except FileNotFoundError:
