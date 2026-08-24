@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 import json
 import asyncio
 from pathlib import Path
+from typing import Callable
 
 from backend import analyzer, generator
 
@@ -172,31 +173,16 @@ async def run_commands(request: Request):
 
 
 # ---------------------------------------------------------------------------
-# SSE streaming endpoint – live progress updates to the frontend
+# SSE streaming – live progress updates to the frontend
+#
+# Both streaming endpoints below share this helper: it runs a synchronous
+# `work(on_log)` function in a thread pool (clone/analyse/AI calls are all
+# blocking), forwards every on_log(...) call as an SSE event as it happens,
+# turns an uncaught exception into an "error" event, and always finishes
+# with a synthetic "end" event so the frontend knows the stream is done.
 # ---------------------------------------------------------------------------
 
-@app.get("/scan/stream")
-async def scan_stream(url: str, os: str = "linux"):
-    """Server-Sent Events endpoint that streams live progress.
-
-    **Usage:**
-    ```
-    GET /scan/stream?url=https://github.com/owner/repo&os=linux
-    ```
-
-    **Events sent (one JSON per line):**
-    ```
-    data: {"step": "clone", "message": "Cloning repository...", "data": null}
-    data: {"step": "analyze", "message": "Analysis complete...", "data": {...}}
-    data: {"step": "ai", "message": "AI returned commands", "data": {...}}
-    data: {"step": "install", "message": "Installing dependencies: npm install", "data": null}
-    data: {"step": "install", "message": "Dependencies installed successfully.", "data": null}
-    data: {"step": "dev", "message": "Starting dev server: npm run dev", "data": null}
-    data: {"step": "done", "message": "App running at http://localhost:5173", "data": {"running": true, "port": 5173, "pid": 12345}}
-    ```
-
-    Steps: clone, analyze, ai, commands, pre_install, install, post_install, dev, done, error
-    """
+def _sse_stream_response(work: Callable[[Callable], None]) -> StreamingResponse:
     queue: asyncio.Queue = asyncio.Queue()
     loop = asyncio.get_event_loop()
 
@@ -207,43 +193,22 @@ async def scan_stream(url: str, os: str = "linux"):
             loop,
         )
 
-    async def run_scan():
-        """Run the full scan flow in a thread pool, pushing events."""
-        def _do_scan():
-            try:
-                # 1. Clone & analyse
-                profile = analyzer.analyze_repo(url, user_os=os, on_log=on_log)
+    def _run():
+        try:
+            work(on_log)
+        except Exception as e:
+            asyncio.run_coroutine_threadsafe(
+                queue.put({"step": "error", "message": str(e), "data": None}),
+                loop,
+            )
+        # Signal end of stream
+        asyncio.run_coroutine_threadsafe(queue.put(None), loop)
 
-                # 2. Get commands from AI
-                commands = generator.generate(profile, on_log=on_log)
+    # Run the (blocking) work in a thread pool, in the background
+    async def _runner():
+        await loop.run_in_executor(None, _run)
 
-                # Send the commands as a dedicated event
-                asyncio.run_coroutine_threadsafe(
-                    queue.put({
-                        "step": "commands",
-                        "message": "Setup plan ready",
-                        "data": commands,
-                    }),
-                    loop,
-                )
-
-                # 3. Execute locally
-                local_path = profile.get("local_path", ".")
-                generator.run_local(local_path, commands, on_log=on_log)
-
-            except Exception as e:
-                asyncio.run_coroutine_threadsafe(
-                    queue.put({"step": "error", "message": str(e), "data": None}),
-                    loop,
-                )
-
-            # Signal end of stream
-            asyncio.run_coroutine_threadsafe(queue.put(None), loop)
-
-        await asyncio.get_event_loop().run_in_executor(None, _do_scan)
-
-    # Start the scan in the background
-    asyncio.create_task(run_scan())
+    asyncio.create_task(_runner())
 
     async def event_generator():
         while True:
@@ -263,3 +228,91 @@ async def scan_stream(url: str, os: str = "linux"):
             "Connection": "keep-alive",
         },
     )
+
+
+@app.get("/scan/stream")
+async def scan_stream(url: str, os: str = "linux"):
+    """Server-Sent Events endpoint that streams live progress (Run button).
+
+    **Usage:**
+    ```
+    GET /scan/stream?url=https://github.com/owner/repo&os=linux
+    ```
+
+    **Events sent (one JSON per line):**
+    ```
+    data: {"step": "clone", "message": "Cloning repository...", "data": null}
+    data: {"step": "analyze", "message": "Analysis complete...", "data": {...}}
+    data: {"step": "ai", "message": "AI returned commands", "data": {...}}
+    data: {"step": "install", "message": "Installing dependencies: npm install", "data": null}
+    data: {"step": "install", "message": "Dependencies installed successfully.", "data": null}
+    data: {"step": "dev", "message": "Starting dev server: npm run dev", "data": null}
+    data: {"step": "done", "message": "App running at http://localhost:5173", "data": {"running": true, "port": 5173, "pid": 12345}}
+    ```
+
+    Steps: clone, analyze, ai, commands, pre_install, install, post_install, dev, done, error
+    """
+    def work(on_log):
+        # 1. Clone & analyse
+        profile = analyzer.analyze_repo(url, user_os=os, on_log=on_log)
+
+        # 2. Get commands from AI
+        commands = generator.generate(profile, on_log=on_log)
+        on_log("commands", "Setup plan ready", commands)
+
+        # 3. Execute locally (emits its own "done" event on success)
+        local_path = profile.get("local_path", ".")
+        generator.run_local(local_path, commands, on_log=on_log)
+
+    return _sse_stream_response(work)
+
+
+@app.get("/scan/stream/generate")
+async def scan_stream_generate(url: str, os: str = "linux"):
+    """Server-Sent Events endpoint that streams live progress (Generate button).
+
+    Clones and analyses the repo, then asks AI for Docker config files and
+    writes them into the cloned repo — the same work as `POST /scan`, but
+    with live progress instead of a single blocking response.
+
+    **Usage:**
+    ```
+    GET /scan/stream/generate?url=https://github.com/owner/repo&os=linux
+    ```
+
+    **Events sent (one JSON per line):**
+    ```
+    data: {"step": "clone", "message": "Cloning repository...", "data": null}
+    data: {"step": "analyze", "message": "Analysis complete...", "data": {...}}
+    data: {"step": "ai", "message": "AI returned Docker config successfully.", "data": {...}}
+    data: {"step": "write", "message": "  wrote /tmp/.../Dockerfile", "data": null}
+    data: {"step": "done", "message": "Config files generated successfully!", "data": {"profile": {...}, "artifacts": {...}, "written_files": [...], "local_path": "..."}}
+    ```
+
+    Steps: clone, analyze, ai, write, done, error
+    """
+    def work(on_log):
+        # 1. Clone & analyse
+        profile = analyzer.analyze_repo(url, user_os=os, on_log=on_log)
+
+        # 2. Generate Docker artifacts from AI
+        artifacts = generator.generate_docker(profile, on_log=on_log)
+
+        # 3. Write artifacts to the cloned repo
+        local_path = profile.get("local_path", ".")
+        written_files = generator.write_artifacts(local_path, artifacts, on_log=on_log)
+
+        on_log("done", "Config files generated successfully!", {
+            "profile": {
+                "name": profile.get("name"),
+                "languages": profile.get("languages"),
+                "frameworks": profile.get("frameworks"),
+                "ports": profile.get("ports"),
+                "local_path": profile.get("local_path"),
+            },
+            "artifacts": artifacts,
+            "written_files": written_files,
+            "local_path": local_path,
+        })
+
+    return _sse_stream_response(work)
